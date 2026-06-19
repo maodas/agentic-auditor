@@ -1,0 +1,68 @@
+---
+import Layout from '../layouts/Layout.astro';
+import IngestionZone from '../components/IngestionZone.astro';
+import ChatConsole from '../components/ChatConsole.astro';
+---
+
+<Layout title="Agentic Auditor — Enterprise Protocol Engine">
+  <div class="flex flex-col h-screen max-w-5xl mx-auto px-4 md:px-6">
+    
+    <header class="h-16 shrink-0 border-b border-[#1c1f26] flex items-center justify-between bg-[#0b0c0e]">
+      <div class="flex items-center gap-3">
+        <div class="h-5 w-5 bg-gradient-to-br from-[#e0a96d] to-[#aa7c11] rounded-sm flex items-center justify-center font-mono font-bold text-[10px] text-slate-950">Ω</div>
+        <div class="flex items-baseline gap-2">
+          <span class="font-bold text-sm tracking-widest text-slate-200">INTERNAL.AUDITOR</span>
+          <span class="text-[10px] font-mono text-slate-500 hidden sm:inline">V1.0.0</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-slate-500 font-mono text-[10px]">
+        <span class="h-1.5 w-1.5 rounded-full bg-[#84a98c] shadow-[0_0_6px_#84a98c]"></span>
+        <span>CORE_ONLINE</span>
+      </div>
+    </header>
+
+    <section class="py-4 border-b border-[#1c1f26]/60 shrink-0 bg-[#0b0c0e]">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+        <div class="md:col-span-5 space-y-1">
+          <h2 class="text-xs font-bold font-mono uppercase tracking-widest text-slate-400">01 // SOURCE ATTACHMENT</h2>
+          <p class="text-sm text-slate-500 leading-relaxed">Isolate asset boundaries via dynamic token partitions.</p>
+        </div>
+        <div class="md:col-span-7">
+          <IngestionZone />
+        </div>
+      </div>
+    </section>
+
+    <section class="py-4 border-b border-[#1c1f26]/60 shrink-0 bg-[#0b0c0e] font-mono text-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <span class="font-bold tracking-widest text-slate-400 uppercase text-[10px] sm:text-xs">02 // AGENT ROUTING MATRIX:</span>
+        
+        <div class="flex flex-wrap items-center gap-4 text-slate-400 text-xs">
+          <div id="trace-supervisor" class="flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418] border border-[#1c1f26] transition-all">
+            <span class="h-2 w-2 rounded-full bg-[#84a98c] shadow-[0_0_6px_#84a98c]" id="dot-supervisor"></span>
+            <span class="text-slate-200 font-medium">Orchestrator</span>
+          </div>
+
+          <span class="text-slate-700 hidden sm:inline text-sm">→</span>
+
+          <div id="trace-vector" class="flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all">
+            <span class="h-2 w-2 rounded-full bg-slate-800" id="dot-vector"></span>
+            <span>Local_Vector</span>
+          </div>
+
+          <span class="text-slate-700 hidden sm:inline text-sm">→</span>
+
+          <div id="trace-wan" class="flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all">
+            <span class="h-2 w-2 rounded-full bg-slate-800" id="dot-wan"></span>
+            <span>WAN_Compliance</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="flex-1 min-h-0 py-5">
+      <ChatConsole />
+    </main>
+    
+  </div>
+</Layout>
