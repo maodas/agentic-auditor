@@ -23,16 +23,20 @@
 </div>
 
 <script>
+  // Initialize state arrays and safely query DOM bindings
   let chatHistory: Array<{role: string, content: string}> = [];
-  const chatArena = document.getElementById('chat-arena');
+  
   const chatForm = document.getElementById('chat-form');
   const userInput = document.getElementById('user-input') as HTMLInputElement;
   const pillarsContainer = document.getElementById('pillars-container');
   const pillsWrapper = document.getElementById('pills-wrapper');
 
+  // Document dynamic segment pill registration
   window.addEventListener('document-processed', (e: any) => {
-    pillarsContainer?.classList.remove('hidden');
-    pillsWrapper!.innerHTML = '';
+    if (!pillarsContainer || !pillsWrapper || !userInput) return;
+    
+    pillarsContainer.classList.remove('hidden');
+    pillsWrapper.innerHTML = '';
     
     e.detail.sections.forEach((section: string) => {
       const pill = document.createElement('button');
@@ -42,17 +46,21 @@
         userInput.value = `Audit core structures for segment: [${section}] // Target: `;
         userInput.focus();
       };
-      pillsWrapper?.appendChild(pill);
+      pillsWrapper.appendChild(pill);
     });
   });
 
   chatForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!userInput) return;
+    
     const prompt = userInput.value.trim();
     if (!prompt) return;
 
     userInput.value = '';
-    appendMessage('user', prompt);
+    
+    // Inject user message node directly to UI
+    appendUserMessage(prompt);
 
     // Dynamic Telemetry Elements
     const traceVector = document.getElementById('trace-vector');
@@ -60,78 +68,136 @@
     const traceWan = document.getElementById('trace-wan');
     const dotWan = document.getElementById('dot-wan');
 
-    // Reset status to active ingestion trace
-    const isBroadLegal = prompt.toLowerCase().includes('global') || prompt.toLowerCase().includes('standard') || prompt.toLowerCase().includes('tax') || prompt.toLowerCase().includes('search') || prompt.toLowerCase().includes('web');
-
-    if (isBroadLegal) {
-      // Light up Web Agent panel
-      traceWan?.classList.remove('bg-[#121418]/40', 'border-[#1c1f26]/40', 'text-slate-500');
-      traceWan?.classList.add('bg-[#121418]', 'border-amber-500/30', 'text-amber-400');
-      dotWan?.classList.remove('bg-slate-800');
-      dotWan?.classList.add('bg-amber-400', 'shadow-[0_0_6px_#amber-400]');
-    } else {
-      // Light up Vector Agent panel
-      traceVector?.classList.remove('bg-[#121418]/40', 'border-[#1c1f26]/40', 'text-slate-500');
-      traceVector?.classList.add('bg-[#121418]', 'border-[#84a98c]/30', 'text-[#84a98c]');
-      dotVector?.classList.remove('bg-slate-800');
-      dotVector?.classList.add('bg-[#84a98c]', 'shadow-[0_0_6px_#84a98c]');
-    }
-
     try {
-      const badgeType = isBroadLegal ? 'TRACE // WAN_FALLBACK' : 'TRACE // LCL_VECTOR_ISOLATION';
-
       const response = await fetch('http://127.0.0.1:8000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: prompt, history: chatHistory })
       });
 
-      const data = await response.json();
-      appendMessage('assistant', data.response, badgeType);
-      chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: data.response });
+      // Catch Rate Limiting HTTP 429 status exceptions cleanly
+      if (response.status === 429) {
+        const errorData = await response.json();
+        const messageElement = createAssistantPlaceholder();
+        const bodyTextEl = messageElement.querySelector('.body-text') as HTMLElement;
+        const badgeContainer = messageElement.querySelector('.badge-container') as HTMLElement;
+        
+        messageElement.classList.remove('border-[#1c1f26]/60');
+        messageElement.classList.add('border-amber-500/20', 'bg-amber-950/10');
+        badgeContainer.innerHTML = `<span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-400/40">HTTP 429 // ACCESS_DENIED</span>`;
+        bodyTextEl.innerText = errorData.message;
+        bodyTextEl.classList.remove('text-slate-400', 'animate-pulse');
+        bodyTextEl.classList.add('text-amber-200/80');
+        return; 
+      }
+
+      if (!response.body) throw new Error("No readable stream channel.");
+      
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      // Create placeholder cell for streaming output
+      const messageElement = createAssistantPlaceholder();
+      const bodyTextEl = messageElement.querySelector('.body-text') as HTMLElement;
+      const badgeContainer = messageElement.querySelector('.badge-container') as HTMLElement;
+
+      let isFirstChunk = true;
+      let standardResponseText = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunkText = decoder.decode(value);
+        const lines = chunkText.split('\n');
+        
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          
+          try {
+            const parsed = JSON.parse(line.replace('data: ', ''));
+            
+            if (parsed.type === 'metadata') {
+              if (parsed.badge.includes('WAN')) {
+                traceWan?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418] border border-amber-500/30 text-amber-400 transition-all');
+                dotWan?.setAttribute('class', 'h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_6px_#amber-400]');
+              } else {
+                traceVector?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418] border border-[#84a98c]/30 text-[#84a98c] transition-all');
+                dotVector?.setAttribute('class', 'h-2 w-2 rounded-full bg-[#84a98c] shadow-[0_0_6px_#84a98c]');
+              }
+              badgeContainer.innerHTML = `<span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-zinc-800 text-zinc-400 border border-zinc-700/40">${parsed.badge}</span>`;
+            } 
+            
+            if (parsed.type === 'content') {
+              if (isFirstChunk) {
+                bodyTextEl.innerText = '';
+                bodyTextEl.classList.remove('animate-pulse', 'text-slate-400');
+                bodyTextEl.classList.add('text-slate-200');
+                isFirstChunk = false;
+              }
+              bodyTextEl.innerText += parsed.token;
+              standardResponseText += parsed.token;
+              
+              const chatArena = document.getElementById('chat-arena');
+              if (chatArena) chatArena.scrollTop = chatArena.scrollHeight;
+            }
+          } catch (e) {
+            // Keep silent for partial chunk splits
+          }
+        }
+      }
+      
+      // Save to conversation tracking sequence
+      chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: standardResponseText });
+      
     } catch (error) {
-      appendMessage('assistant', 'RUNTIME ENGINE FAIL: Verification parameters disconnected.');
+      console.error(error);
     } finally {
-      // Gracefully restore tracking blocks to standard standby mode after response arrives
+      // Return telemetry targets smoothly to standby after processing ends
       setTimeout(() => {
-        traceVector?.setAttribute('class', 'flex items-center gap-2 px-2.5 py-1 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all');
-        dotVector?.setAttribute('class', 'h-1.5 w-1.5 rounded-full bg-slate-800');
-        traceWan?.setAttribute('class', 'flex items-center gap-2 px-2.5 py-1 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all');
-        dotWan?.setAttribute('class', 'h-1.5 w-1.5 rounded-full bg-slate-800');
-      }, 1200);
+        traceVector?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all');
+        dotVector?.setAttribute('class', 'h-2 w-2 rounded-full bg-slate-800');
+        traceWan?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all');
+        dotWan?.setAttribute('class', 'h-2 w-2 rounded-full bg-slate-800');
+      }, 1000);
     }
   });
 
-function appendMessage(role: string, content: string, badge?: string) {
+  // Dynamic DOM node injectors
+  function appendUserMessage(text: string) {
     const chatArena = document.getElementById('chat-arena');
     if (!chatArena) return;
-
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `border rounded-md p-5 transition-all ${role === 'user' ? 'bg-[#181b22]/40 border-[#1c1f26]' : 'bg-[#0b0c0e]/60 border-[#1c1f26]/60'}`;
     
-    const metaRow = document.createElement('div');
-    metaRow.className = "flex items-center gap-2 mb-2 font-mono text-[11px]";
-    
-    const actor = document.createElement('span');
-    actor.className = role === 'user' ? 'text-slate-400 font-semibold' : 'text-[#84a98c] font-bold';
-    actor.innerText = role === 'user' ? '› USER.CMD' : '› ENGINE.SYS';
-    metaRow.appendChild(actor);
-
-    if (badge) {
-      const bSpan = document.createElement('span');
-      bSpan.className = `px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-900/20 text-amber-400 border border-amber-900/30`;
-      bSpan.innerText = badge;
-      metaRow.appendChild(bSpan);
-    }
-
-    const bodyText = document.createElement('p');
-    // Bumped class to base (16px) for crisp readability
-    bodyText.className = "text-base leading-relaxed tracking-normal font-sans mt-2 whitespace-pre-wrap text-slate-200 selection:bg-[#84a98c]/20";
-    bodyText.innerText = content;
-    
-    msgDiv.appendChild(metaRow);
-    msgDiv.appendChild(bodyText);
-    chatArena.appendChild(msgDiv);
+    const div = document.createElement('div');
+    div.className = 'border rounded-md p-5 bg-[#181b22]/40 border-[#1c1f26] text-slate-200 max-w-full overflow-hidden min-w-0';
+    div.innerHTML = `
+      <div class="flex items-center gap-2 mb-2 font-mono text-[10px]">
+        <span class="text-slate-500 font-semibold">› USER.CMD</span>
+      </div>
+      <p class="text-sm leading-relaxed tracking-normal font-sans mt-2 text-slate-200 break-words whitespace-pre-wrap min-w-0">${text}</p>
+    `;
+    chatArena.appendChild(div);
     chatArena.scrollTop = chatArena.scrollHeight;
+  }
+
+    function createAssistantPlaceholder() {
+        const chatArena = document.getElementById('chat-arena');
+        if (!chatArena) return document.createElement('div');
+        
+        const div = document.createElement('div');
+        // Ensure the main message row can't overflow its boundaries
+        div.className = 'border rounded-md p-5 bg-[#0b0c0e]/60 border-[#1c1f26]/60 text-slate-300 max-w-full overflow-hidden min-w-0';
+        div.innerHTML = `
+        <div class="flex items-center justify-between mb-2 font-mono text-[10px]">
+            <div class="flex items-center gap-2">
+            <span class="text-[#84a98c] font-bold">› ENGINE.SYS</span>
+            </div>
+            <div class="badge-container"></div>
+        </div>
+        <p class="body-text text-sm leading-relaxed tracking-normal font-sans mt-2 text-slate-400 animate-pulse break-words whitespace-pre-wrap min-w-0"></p>
+        `;
+        chatArena.appendChild(div);
+        chatArena.scrollTop = chatArena.scrollHeight;
+        return div;
   }
 </script>

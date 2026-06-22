@@ -1,12 +1,19 @@
 # main.py
+import asyncio
 import os
 import shutil
+import json
+import time  # <--- ADD THIS CRUCIAL IMPORT TO FIX THE 500 CRASH
 from fastapi import FastAPI, UploadFile, File, HTTPException, Body
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 from ingest import ingest_pdf_pipeline
 from app.graph import run_agent
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+from fastapi import Request
 
 app = FastAPI(title="Agentic Auditor API", version="1.0.0")
 
@@ -18,6 +25,68 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class TokenBucketLimiter(BaseHTTPMiddleware):
+    def __init__(self, app, max_tokens: int = 5, replenish_rate: float = 30.0):
+        """
+        max_tokens: Maximum capacity of the user's bucket.
+        replenish_rate: Time in seconds required to regenerate exactly 1 token.
+        """
+        super().__init__(app)
+        self.max_tokens = max_tokens
+        self.replenish_rate = replenish_rate
+        # In-memory matrix tracking structural rate states per IP address
+        self.buckets: Dict[str, Dict[str, float]] = {}
+
+    def _get_updated_tokens(self, ip: str) -> float:
+        current_time = time.time()
+        
+        # Initialize an explicit bucket instance if this is a newly discovered IP
+        if ip not in self.buckets:
+            self.buckets[ip] = {
+                "tokens": float(self.max_tokens),
+                "last_update": current_time
+            }
+            return float(self.max_tokens)
+            
+        bucket = self.buckets[ip]
+        elapsed = current_time - bucket["last_update"]
+        
+        # Calculate how many tokens regenerated during the time window
+        regenerated = elapsed / self.replenish_rate
+        new_tokens = min(float(self.max_tokens), bucket["tokens"] + regenerated)
+        
+        # Update state tracking variables
+        bucket["tokens"] = new_tokens
+        bucket["last_update"] = current_time
+        return new_tokens
+
+    async def dispatch(self, request: Request, call_next):
+        # Apply strict checking conditions solely to downstream resource-heavy mutation routes
+        if request.url.path in ["/api/chat", "/api/upload"]:
+            # Isolate connection string headers
+            client_ip = request.client.host if request.client else "unknown_node"
+            available_tokens = self._get_updated_tokens(client_ip)
+            
+            if available_tokens < 1.0:
+                # Calculate required cool-down wait parameter to return to the client
+                retry_after = int(self.replenish_rate * (1.0 - available_tokens))
+                return JSONResponse(
+                    status_code=429,
+                    content={
+                        "error": "RATE_LIMIT_EXCEEDED",
+                        "message": f"Resource threshold breached. Backoff cool-down required: {retry_after}s."
+                    },
+                    headers={"Retry-After": str(retry_after)}
+                )
+                
+            # Consume exactly one execution token for this request cycle
+            self.buckets[client_ip]["tokens"] -= 1.0
+            
+        return await call_next(request)
+
+# Register the architectural rate-limiting layer right underneath your CORS configuration
+app.add_middleware(TokenBucketLimiter, max_tokens=5, replenish_rate=30.0)
 
 class ChatMessage(BaseModel):
     role: str  # "user" or "assistant"
@@ -69,17 +138,47 @@ async def upload_document(file: UploadFile = File(...)):
 @app.post("/api/chat")
 async def chat_endpoint(payload: ChatRequest):
     """
-    Orchestrates the chat experience via our LangGraph supervisor router.
+    Orchestrates the chat experience via our LangGraph supervisor router 
+    and streams tokens back to the frontend in real-time.
     """
-    try:
-        # Convert Pydantic history into the dictionary structure expected by the backend agent
-        formatted_history = [{"role": msg.role, "content": msg.content} for msg in payload.history]
-        
-        response_content = run_agent(query=payload.query, chat_history=formatted_history)
-        return {"response": response_content}
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Agent orchestration error: {str(e)}")
+    # 1. Formatting History
+    formatted_history = [{"role": msg.role, "content": msg.content} for msg in payload.history]
+    query = payload.query.lower()
+    
+    # 2. Extract Routing Metadata to notify UI Telemetry immediately
+    is_broad_legal = any(x in query for x in ["global", "standard", "tax", "search", "web"])
+    route_badge = "TRACE // WAN_FALLBACK" if is_broad_legal else "TRACE // LCL_VECTOR_ISOLATION"
+
+    # 3. Define Async Stream Generator Channel
+    async def event_generator():
+        try:
+            # Drop the tracking badge event instantly so the routing matrix lights up
+            yield f"data: {json.dumps({'type': 'metadata', 'badge': route_badge})}\n\n"
+            await asyncio.sleep(0.5) # Slight pause to make telemetry changes highly visible
+            
+            # Fetch the complete response block from your LangGraph architecture
+            loop = asyncio.get_running_loop()
+            response_content = await loop.run_in_executor(
+                None, lambda: run_agent(query=payload.query, chat_history=formatted_history)
+            )
+            
+            # --- UPDATED CHUNK TOKENIZATION SEGMENT HERE ---
+            import re
+            chunks = re.split(r'(\s+)', response_content)
+            
+            for chunk in chunks:
+                if chunk: # Prevent streaming empty string anomalies
+                    yield f"data: {json.dumps({'type': 'content', 'token': chunk})}\n\n"
+                    await asyncio.sleep(0.02) # Snappy natural rhythm latency
+            # -----------------------------------------------
+                
+        except asyncio.CancelledError:
+            print("System Event: Connection closed by client interface.")
+        except Exception as err:
+            yield f"data: {json.dumps({'type': 'content', 'token': f' [Runtime Error: {str(err)}]'})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    
 
 # Health check root endpoint for easy service validation
 @app.get("/")
