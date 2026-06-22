@@ -67,7 +67,13 @@
       logStep('Analyzing logical section indices...');
       
       const response = await fetch('http://127.0.0.1:8000/api/upload', { method: 'POST', body: formData });
-      if (!response.ok) throw new Error('Ingestion pipeline structural failure.');
+      
+      // Handle non-200 structural validation failures gracefully
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Ingestion pipeline structural failure.');
+      }
+      
       const data = await response.json();
       
       progressBar!.style.width = '100%';
@@ -78,9 +84,11 @@
       window.dispatchEvent(new CustomEvent('document-processed', { detail: { sections: data.detected_sections } }));
     } catch (error: any) {
       progressBar!.style.width = '100%';
-      progressBar!.classList.add('bg-rose-900');
-      statusText!.innerText = 'FATAL_TRACE_ERR';
+      progressBar!.classList.add('bg-rose-950');
+      statusText!.innerText = 'INVALID_PAYLOAD';
       statusText!.className = 'text-rose-500 font-bold';
+      // UPDATED: Output the actual validation reason directly to the terminal trace logs
+      logStep(`${error.message}`, true);
       logStep('Terminating document parsing context loops.', true);
     }
   }
