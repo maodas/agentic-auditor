@@ -4,21 +4,21 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage
 from app.tools.rag_tool import query_contract_segments, web_legal_search
 
-# Using the powerful llama-3.3-70b-versatile model hosted on Groq (Serverless-optimized, ultra-low latency)
+# Initialize the optimized ChatGroq instance
 llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 tools = [query_contract_segments, web_legal_search]
 
 SYSTEM_ORCHESTRATOR_PROMPT = """
-You are a Senior Agentic Legal Auditor. Your job is to answer the user's queries using the appropriate tools available to you.
+You are a Senior Agentic Legal Auditor. Your primary function is to analyze uploaded corporate contracts, agreements, policies, and address broad legal jurisdictional queries.
+
+SCOPE BOUNDARIES & GUARDRAILS:
+1. ONLY answer queries related to corporate law, contract auditing, compliance, regulations, or legal concepts.
+2. If a user asks for assistance with non-legal topics (e.g., career/CV writing advice, Excel formulas, data analysis tutorials, cooking recipes, or general lifestyle advice), you MUST politely refuse to answer, stating that it is outside your operational scope as a corporate legal auditor.
+3. Be strictly factual. Do not apologize or state that you "cannot provide external results" when answering legal queries that fall under web search scope. Use your tools confidently.
 
 GUIDE FOR TOOL SELECTION:
-1. If the user's question relates directly to the uploaded contract or document (e.g., payment timelines, liabilities, breach terms), invoke `query_contract_segments`. Pass the specific segment name to the 'section' argument if the intent aligns with common sections like 'payment' or 'termination'.
-2. If the user asks a broad legal question, jurisdictional regulation query, or external fact check not present in the document, invoke `web_legal_search`.
-
-GUARDRAILS:
-- Be strictly factual. Base contract responses solely on the returned snippets.
-- If the document context does not contain the answer after a query, explicitly state that the specific terms are missing from the uploaded file.
-- Do not make up legal terms. If searching the web, summarize public legal consensus accurately.
+1. For document-specific lookups (payment terms, liabilities, termination), invoke `query_contract_segments`.
+2. For general legal questions, definitions, or regional laws (such as starting a company in Guatemala), invoke `web_legal_search`. Summarize the tool's findings accurately.
 """
 
 agent_executor = create_react_agent(
@@ -27,12 +27,27 @@ agent_executor = create_react_agent(
     prompt=SYSTEM_ORCHESTRATOR_PROMPT
 )
 
-def run_agent(query: str, chat_history: list = None):
+async def run_agent_stream(query: str, chat_history: list = None):
+    """
+    Asynchronously executes the LangGraph agent framework and yields raw chunks 
+    of content (and tool updates) in real time as they arrive from the model engine.
+    """
     if chat_history is None:
         chat_history = []
         
     messages = chat_history + [{"role": "user", "content": query}]
-    result = agent_executor.invoke({"messages": messages})
     
-    # Extract the last assistant response message
-    return result["messages"][-1].content
+    # Using astream_events v2 allows us to monitor exactly when the model emits tokens
+    async for event in agent_executor.astream_events({"messages": messages}, version="v2"):
+        event_type = event.get("event")
+        
+        # Capture raw LLM tokens stream chunks from the supervisor model
+        if event_type == "on_chat_model_stream":
+            chunk = event["data"].get("chunk")
+            if chunk and chunk.content:
+                yield {"type": "token", "content": chunk.content}
+                
+        # Optional Telemetry: Catch exactly when a tool gets invoked by the graph router
+        elif event_type == "on_tool_start":
+            tool_name = event.get("name")
+            yield {"type": "tool_start", "tool": tool_name}

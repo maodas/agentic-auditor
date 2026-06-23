@@ -1,3 +1,4 @@
+# app/test_main.py
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
@@ -13,8 +14,13 @@ def test_rate_limiter_boundary():
     target_route = "/api/chat"
     payload = {"query": "Test threshold boundaries.", "history": []}
     
-    with patch("app.main.run_agent") as mock_agent:
-        mock_agent.return_value = "Mocked instant agent response."
+    # Target the new streaming function path inside graph.py
+    with patch("app.graph.run_agent_stream") as mock_agent_stream:
+        # Simulate an async generator response for the streaming loop
+        async def mock_stream(*args, **kwargs):
+            yield {"type": "token", "content": "Mocked instant token response."}
+            
+        mock_agent_stream.return_value = mock_stream()
         
         # Drain the token bucket completely (Max capacity = 5 tokens)
         for _ in range(5):
@@ -41,10 +47,13 @@ def test_streaming_response_headers():
     # Fast-forward time by 1000 seconds to instantly replenish all tokens for this client IP
     future_time = time.time() + 1000.0
     
-    with patch("app.main.run_agent") as mock_agent, \
+    with patch("app.graph.run_agent_stream") as mock_agent_stream, \
          patch("time.time", return_value=future_time):
          
-        mock_agent.return_value = "Mocked instant streaming response chunk."
+        async def mock_stream(*args, **kwargs):
+            yield {"type": "token", "content": "Mocked stream chunk."}
+            
+        mock_agent_stream.return_value = mock_stream()
         
         with fresh_client.stream("POST", "/api/chat", json=payload) as response:
             assert response.status_code == 200

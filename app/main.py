@@ -10,7 +10,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from ingest import ingest_pdf_pipeline
-from app.graph import run_agent
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 from fastapi import Request
@@ -150,27 +149,28 @@ async def chat_endpoint(payload: ChatRequest):
     route_badge = "TRACE // WAN_FALLBACK" if is_broad_legal else "TRACE // LCL_VECTOR_ISOLATION"
 
     # 3. Define Async Stream Generator Channel
+    
     async def event_generator():
         try:
             # Drop the tracking badge event instantly so the routing matrix lights up
             yield f"data: {json.dumps({'type': 'metadata', 'badge': route_badge})}\n\n"
-            await asyncio.sleep(0.5) # Slight pause to make telemetry changes highly visible
+            await asyncio.sleep(0.1) # Shorter snappy latency check
             
-            # Fetch the complete response block from your LangGraph architecture
-            loop = asyncio.get_running_loop()
-            response_content = await loop.run_in_executor(
-                None, lambda: run_agent(query=payload.query, chat_history=formatted_history)
-            )
+            # Iterate asynchronously through the live LangGraph emission tokens
+            from app.graph import run_agent_stream
             
-            # --- UPDATED CHUNK TOKENIZATION SEGMENT HERE ---
-            import re
-            chunks = re.split(r'(\s+)', response_content)
-            
-            for chunk in chunks:
-                if chunk: # Prevent streaming empty string anomalies
-                    yield f"data: {json.dumps({'type': 'content', 'token': chunk})}\n\n"
-                    await asyncio.sleep(0.02) # Snappy natural rhythm latency
-            # -----------------------------------------------
+            async for chunk in run_agent_stream(query=payload.query, chat_history=formatted_history):
+                # If it's a token block, stream it straight to the frontend canvas
+                if chunk["type"] == "token":
+                    yield f"data: {json.dumps({'type': 'content', 'token': chunk['content']})}\n\n"
+                
+                # If a tool starts up, you can optionally flash a runtime trace status message
+                elif chunk["type"] == "tool_start":
+                    # Updates telemetry path text dynamically if the agent requests a RAG lookup
+                    if chunk["tool"] == "query_contract_segments":
+                        yield f"data: {json.dumps({'type': 'metadata', 'badge': 'TRACE // EXECUTING_RAG_TOOL'})}\n\n"
+                    elif chunk["tool"] == "web_legal_search":
+                        yield f"data: {json.dumps({'type': 'metadata', 'badge': 'TRACE // EXECUTING_WAN_SEARCH'})}\n\n"
                 
         except asyncio.CancelledError:
             print("System Event: Connection closed by client interface.")

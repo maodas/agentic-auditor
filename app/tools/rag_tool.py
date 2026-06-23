@@ -4,12 +4,16 @@ from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import SupabaseVectorStore
-from langchain_community.tools import DuckDuckGoSearchRun
 from supabase.client import create_client
 from dotenv import load_dotenv
 from duckduckgo_search import DDGS
 
 load_dotenv()
+
+# --- PRODUCTION OPTIMIZATION: HOT GLOBAL INSTANCES ---
+# These are loaded ONCE when the app initializes, preventing severe memory and network bottlenecks.
+supabase_client = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_KEY"))
+embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 class DynamicLegalQuerySchema(BaseModel):
     query: str = Field(description="The specific question or clause to search for.")
@@ -19,16 +23,14 @@ class DynamicLegalQuerySchema(BaseModel):
     )
 
 def get_rag_retriever(section_filter=None):
-    supabase = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_KEY"))
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    # Reuses global connection pools safely across concurrent streams
     vector_store = SupabaseVectorStore(
-        client=supabase,
-        embedding=embeddings,
+        client=supabase_client,
+        embedding=embedding_model,
         table_name="documents",
         query_name="match_documents"
     )
     
-    # Apply Supabase metadata filtering if a specific virtual agent section is requested
     search_kwargs = {"k": 5}
     if section_filter and section_filter.lower() != "general":
         search_kwargs["filter"] = {"section": section_filter.lower()}
@@ -45,7 +47,6 @@ def query_contract_segments(query: str, section: str = "general") -> str:
     docs = retriever.invoke(query)
     
     if not docs:
-        # Fallback to broader search if the metadata filter was too tight
         retriever_fallback = get_rag_retriever(section_filter="general")
         docs = retriever_fallback.invoke(query)
         
@@ -59,9 +60,7 @@ def web_legal_search(query: str) -> str:
     be answered by the document itself.
     """
     try:
-        # Using the direct, up-to-date client library bypasses LangChain's brittle wrapper
         with DDGS() as ddgs:
-            # Fetch the top 3 instant snippets
             results = [r for r in ddgs.text(query, max_results=3)]
             
         if not results:
