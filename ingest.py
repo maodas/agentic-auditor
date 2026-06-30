@@ -1,5 +1,6 @@
 import os
 import json
+from typing import Any, Dict
 from langchain_unstructured import UnstructuredLoader
 from langchain_community.vectorstores import SupabaseVectorStore
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
@@ -10,7 +11,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def validate_and_extract_sections(full_text: str):
+def validate_and_extract_sections(full_text: str) -> Dict[str, Any]:
+    """
+    Evaluates document structural liability bounds using a foundational model LLM 
+    to extract isolated sections and run a compliance validation filter.
+    """
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
     
     prompt = f"""
@@ -37,13 +42,16 @@ def validate_and_extract_sections(full_text: str):
     try:
         response = llm.invoke([HumanMessage(content=prompt)])
         clean_content = response.content.strip().lstrip("```json").rstrip("```")
-        result = json.loads(clean_content)
-        return result
+        return json.loads(clean_content)
     except Exception as e:
-        print(f"Error during structural classification: {e}")
+        print(f"Error during structural classification pipeline parsing: {str(e)}")
         return {"is_legal": True, "reasoning": "Fallback extraction", "sections": ["General", "Terms"]}
 
-def ingest_pdf_pipeline(file_path: str):
+def ingest_pdf_pipeline(file_path: str) -> Dict[str, Any]:
+    """
+    Orchestrates the serverless partitioning pipeline, generating vector embeddings 
+    and loading chunk contents directly to remote Supabase tables.
+    """
     supabase = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_KEY"))
     
     print(f"Executing Serverless Partitioning via Unstructured API for: {os.path.basename(file_path)}")

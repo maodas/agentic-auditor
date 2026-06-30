@@ -23,7 +23,10 @@ class DynamicLegalQuerySchema(BaseModel):
         description="The targeted section name identified during ingestion (e.g., 'payment', 'termination', 'exportation', or 'general')."
     )
 
-def get_rag_retriever(section_filter=None):
+def get_rag_retriever(section_filter: Optional[str] = None) -> SupabaseVectorStore:
+    """
+    Initializes a dynamic vector store retrieval layer using explicit section metadata filters.
+    """
     vector_store = SupabaseVectorStore(
         client=supabase_client,
         embedding=embedding_model,
@@ -74,3 +77,4 @@ def web_legal_search(query: str) -> str:
         
     except Exception as e:
         return f"External web search failed due to a network or structural timeout: {str(e)}"
+    

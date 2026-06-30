@@ -8,7 +8,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, AsyncGenerator
 from ingest import ingest_pdf_pipeline
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
@@ -26,6 +26,10 @@ app.add_middleware(
 )
 
 class TokenBucketLimiter(BaseHTTPMiddleware):
+    """
+    Asynchronous middleware implementing a token bucket rate limiter
+    with Redis and local memory fallback logic.
+    """
     def __init__(self, app, max_tokens: int = 5, replenish_rate: float = 30.0):
         super().__init__(app)
         self.max_tokens = max_tokens
@@ -118,7 +122,7 @@ class ChatRequest(BaseModel):
     history: Optional[List[ChatMessage]] = []
 
 @app.post("/api/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(file: UploadFile = File(...)) -> Dict[str, str]:
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF legal documents are supported.")
     
@@ -147,14 +151,14 @@ async def upload_document(file: UploadFile = File(...)):
             os.remove(temp_file_path)
 
 @app.post("/api/chat")
-async def chat_endpoint(payload: ChatRequest):
+async def chat_endpoint(payload: ChatRequest) -> StreamingResponse:
     formatted_history = [{"role": msg.role, "content": msg.content} for msg in payload.history]
     query = payload.query.lower()
     
     is_broad_legal = any(x in query for x in ["global", "standard", "tax", "search", "web"])
     route_badge = "TRACE // WAN_FALLBACK" if is_broad_legal else "TRACE // LCL_VECTOR_ISOLATION"
 
-    async def event_generator():
+    async def event_generator() -> AsyncGenerator[str, None]:
         try:
             yield f"data: {json.dumps({'type': 'metadata', 'badge': route_badge})}\n\n"
             await asyncio.sleep(0.05) 
@@ -176,5 +180,5 @@ async def chat_endpoint(payload: ChatRequest):
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.get("/")
-def read_root():
+def read_root() -> Dict[str, str]:
     return {"status": "online", "engine": "Agentic Auditor Multi-Agent RAG v1"}

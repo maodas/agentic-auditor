@@ -1,5 +1,6 @@
 from langgraph.prebuilt import create_react_agent
 from langchain_groq import ChatGroq
+from typing import AsyncGenerator, List, Dict, Optional
 from app.tools.rag_tool import query_contract_segments, web_legal_search
 
 llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
@@ -24,7 +25,13 @@ agent_executor = create_react_agent(
     prompt=SYSTEM_ORCHESTRATOR_PROMPT
 )
 
-async def run_agent_stream(query: str, chat_history: list = None):
+async def run_agent_stream(
+    query: str, 
+    chat_history: Optional[List[Dict[str, str]]] = None
+) -> AsyncGenerator[Dict[str, str], None]:
+    """
+    Streams multi-agent graph execution cycles asynchronously using serverless LangGraph event traces.
+    """
     if chat_history is None:
         chat_history = []
         
