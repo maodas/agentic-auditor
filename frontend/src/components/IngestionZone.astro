@@ -14,11 +14,9 @@
       <span id="status-text" class="text-[#84a98c] font-bold tracking-wider">PIPELINE_STAGED</span>
       <span id="filename-badge" class="text-slate-500 max-w-[200px] truncate"></span>
     </div>
-    
     <div class="w-full bg-[#1c1f26] h-[2px] overflow-hidden rounded-full">
       <div id="progress-bar" class="bg-[#84a98c] h-[2px] rounded-full transition-all duration-300 w-1/12"></div>
     </div>
-
     <div id="pipeline-logs" class="space-y-1 text-slate-500 max-h-32 overflow-y-auto pt-1 border-t border-[#1c1f26]"></div>
   </div>
 </div>
@@ -31,6 +29,8 @@
   const statusText = document.getElementById('status-text');
   const filenameBadge = document.getElementById('filename-badge');
   const pipelineLogs = document.getElementById('pipeline-logs');
+
+  const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'https://agentic-auditor.onrender.com';
 
   function logStep(message: string, isError = false) {
     const line = document.createElement('div');
@@ -51,14 +51,16 @@
   fileInput?.addEventListener('change', () => { if (fileInput.files?.length) handleUpload(fileInput.files[0]); });
 
   async function handleUpload(file: File) {
-    if (!file.name.endsWith('.pdf')) { alert('Target payload must be a valid PDF format.'); return; }
+    if (!file.name.endsWith('.pdf')) { 
+      alert('Target payload must be a valid PDF format.');
+      return; 
+    }
     uploadStatus?.classList.remove('hidden');
     filenameBadge!.innerText = file.name.toUpperCase();
     pipelineLogs!.innerHTML = '';
     
     progressBar!.style.width = '25%';
     logStep('Initializing runtime thread isolation...');
-
     const formData = new FormData();
     formData.append('file', file);
 
@@ -66,28 +68,23 @@
       progressBar!.style.width = '60%';
       logStep('Analyzing logical section indices...');
       
-      const response = await fetch('http://127.0.0.1:8000/api/upload', { method: 'POST', body: formData });
-      
-      // Handle non-200 structural validation failures gracefully
+      const response = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/api/upload`, { method: 'POST', body: formData });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Ingestion pipeline structural failure.');
       }
       
       const data = await response.json();
-      
       progressBar!.style.width = '100%';
       statusText!.innerText = 'TARGETS_RESOLVED';
       statusText!.className = 'text-[#84a98c] font-bold';
       logStep(`Context namespaces mapped: ${data.detected_sections.join(', ')}`);
-
       window.dispatchEvent(new CustomEvent('document-processed', { detail: { sections: data.detected_sections } }));
     } catch (error: any) {
       progressBar!.style.width = '100%';
       progressBar!.classList.add('bg-rose-950');
       statusText!.innerText = 'INVALID_PAYLOAD';
       statusText!.className = 'text-rose-500 font-bold';
-      // UPDATED: Output the actual validation reason directly to the terminal trace logs
       logStep(`${error.message}`, true);
       logStep('Terminating document parsing context loops.', true);
     }

@@ -1,13 +1,12 @@
 ---
 ---
-<div id="chat-console" class="bg-[#121418] border border-[#1c1f26] rounded-md flex flex-col h-full shadow-2xl overflow-hidden">
-  
+<div id="chat-console" class="bg-[#121418] border border-[#1c1f26] rounded-md flex flex-col h-[600px] shadow-2xl overflow-hidden">
   <div id="pillars-container" class="bg-[#0b0c0e] border-b border-[#1c1f26] px-4 py-3 hidden">
     <span class="text-[9px] uppercase font-bold font-mono tracking-widest text-slate-500 block mb-2">TARGET SUBSURFACE SECTOR INTAKES:</span>
     <div id="pills-wrapper" class="flex flex-wrap gap-1.5"></div>
   </div>
 
-  <div id="chat-arena" class="flex-1 p-5 overflow-y-auto space-y-5 bg-gradient-to-b from-[#0b0c0e]/20 to-transparent text-sm">
+  <div id="chat-arena" class="flex-1 p-5 overflow-y-auto space-y-5 bg-gradient-to-b from-[#0b0c0e]/20 to-transparent text-sm custom-scrollbar">
     <div class="max-w-xl border border-[#1c1f26] bg-[#0b0c0e]/60 rounded-md p-4 text-slate-400 font-mono space-y-1 text-xs">
       <p class="text-slate-200 font-bold">SYSTEM CORE INITIALIZED // INSTANCE RUNNING</p>
       <p class="text-slate-500">Provide a structured contract to isolate RAG segments, or run global lookups directly below.</p>
@@ -16,14 +15,30 @@
 
   <form id="chat-form" class="border-t border-[#1c1f26] p-4 bg-[#0b0c0e]/50 flex items-center gap-3 shrink-0">
     <input type="text" id="user-input" placeholder="Query contract parameters or assert regulatory thresholds..." autocomplete="off" class="flex-1 bg-[#0b0c0e] border border-[#1c1f26] rounded px-4 py-3.5 text-base text-slate-200 font-mono placeholder-slate-600 focus:outline-none focus:border-[#424b5d] transition-all" />
-    <button type="submit" class="bg-[#84a98c] hover:bg-[#9dc1a3] text-slate-950 text-xs font-bold font-mono px-6 py-3.5 rounded transition-all uppercase tracking-widest shadow-md hover:shadow-[#84a98c]/10 cursor-pointer">
+    <button type="submit" class="bg-[#84a98c] hover:bg-[#9dc1a3] text-slate-950 text-xs font-bold font-mono px-6 py-3.5 rounded transition-all uppercase tracking-widest shadow-md cursor-pointer">
       EXECUTE
     </button>
   </form>
 </div>
 
+<style>
+  /* Optional polish: Ensure scroll tracks match your clean dark interface values */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #0b0c0e;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #1c1f26;
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #232730;
+  }
+</style>
+
 <script>
-  // Initialize state arrays and safely query DOM bindings
   let chatHistory: Array<{role: string, content: string}> = [];
   
   const chatForm = document.getElementById('chat-form');
@@ -31,7 +46,8 @@
   const pillarsContainer = document.getElementById('pillars-container');
   const pillsWrapper = document.getElementById('pills-wrapper');
 
-  // Document dynamic segment pill registration
+  const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'https://agentic-auditor.onrender.com';
+  
   window.addEventListener('document-processed', (e: any) => {
     if (!pillarsContainer || !pillsWrapper || !userInput) return;
     
@@ -58,24 +74,20 @@
     if (!prompt) return;
 
     userInput.value = '';
-    
-    // Inject user message node directly to UI
     appendUserMessage(prompt);
 
-    // Dynamic Telemetry Elements
     const traceVector = document.getElementById('trace-vector');
     const dotVector = document.getElementById('dot-vector');
     const traceWan = document.getElementById('trace-wan');
     const dotWan = document.getElementById('dot-wan');
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/chat', {
+      const response = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: prompt, history: chatHistory })
       });
 
-      // Catch Rate Limiting HTTP 429 status exceptions cleanly
       if (response.status === 429) {
         const errorData = await response.json();
         const messageElement = createAssistantPlaceholder();
@@ -92,11 +104,9 @@
       }
 
       if (!response.body) throw new Error("No readable stream channel.");
-      
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       
-      // Create placeholder cell for streaming output
       const messageElement = createAssistantPlaceholder();
       const bodyTextEl = messageElement.querySelector('.body-text') as HTMLElement;
       const badgeContainer = messageElement.querySelector('.badge-container') as HTMLElement;
@@ -110,13 +120,11 @@
 
         const chunkText = decoder.decode(value);
         const lines = chunkText.split('\n');
-        
+
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
-          
           try {
             const parsed = JSON.parse(line.replace('data: ', ''));
-            
             if (parsed.type === 'metadata') {
               if (parsed.badge.includes('WAN')) {
                 traceWan?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418] border border-amber-500/30 text-amber-400 transition-all');
@@ -141,19 +149,14 @@
               const chatArena = document.getElementById('chat-arena');
               if (chatArena) chatArena.scrollTop = chatArena.scrollHeight;
             }
-          } catch (e) {
-            // Keep silent for partial chunk splits
-          }
+          } catch (e) {}
         }
       }
       
-      // Save to conversation tracking sequence
       chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: standardResponseText });
-      
     } catch (error) {
       console.error(error);
     } finally {
-      // Return telemetry targets smoothly to standby after processing ends
       setTimeout(() => {
         traceVector?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all');
         dotVector?.setAttribute('class', 'h-2 w-2 rounded-full bg-slate-800');
@@ -163,7 +166,6 @@
     }
   });
 
-  // Dynamic DOM node injectors
   function appendUserMessage(text: string) {
     const chatArena = document.getElementById('chat-arena');
     if (!chatArena) return;
@@ -180,24 +182,23 @@
     chatArena.scrollTop = chatArena.scrollHeight;
   }
 
-    function createAssistantPlaceholder() {
-        const chatArena = document.getElementById('chat-arena');
-        if (!chatArena) return document.createElement('div');
-        
-        const div = document.createElement('div');
-        // Ensure the main message row can't overflow its boundaries
-        div.className = 'border rounded-md p-5 bg-[#0b0c0e]/60 border-[#1c1f26]/60 text-slate-300 max-w-full overflow-hidden min-w-0';
-        div.innerHTML = `
-        <div class="flex items-center justify-between mb-2 font-mono text-[10px]">
-            <div class="flex items-center gap-2">
-            <span class="text-[#84a98c] font-bold">› ENGINE.SYS</span>
-            </div>
-            <div class="badge-container"></div>
+  function createAssistantPlaceholder() {
+    const chatArena = document.getElementById('chat-arena');
+    if (!chatArena) return document.createElement('div');
+    
+    const div = document.createElement('div');
+    div.className = 'border rounded-md p-5 bg-[#0b0c0e]/60 border-[#1c1f26]/60 text-slate-300 max-w-full overflow-hidden min-w-0';
+    div.innerHTML = `
+      <div class="flex items-center justify-between mb-2 font-mono text-[10px]">
+        <div class="flex items-center gap-2">
+          <span class="text-[#84a98c] font-bold">› ENGINE.SYS</span>
         </div>
-        <p class="body-text text-sm leading-relaxed tracking-normal font-sans mt-2 text-slate-400 animate-pulse break-words whitespace-pre-wrap min-w-0"></p>
-        `;
-        chatArena.appendChild(div);
-        chatArena.scrollTop = chatArena.scrollHeight;
-        return div;
+        <div class="badge-container"></div>
+      </div>
+      <p class="body-text text-sm leading-relaxed tracking-normal font-sans mt-2 text-slate-400 animate-pulse break-words whitespace-pre-wrap min-w-0"></p>
+    `;
+    chatArena.appendChild(div);
+    chatArena.scrollTop = chatArena.scrollHeight;
+    return div;
   }
 </script>

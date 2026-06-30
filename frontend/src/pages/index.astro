@@ -5,7 +5,7 @@ import ChatConsole from '../components/ChatConsole.astro';
 ---
 
 <Layout title="Agentic Auditor — Enterprise Protocol Engine">
-  <div class="flex flex-col h-screen max-w-5xl mx-auto px-4 md:px-6">
+  <div class="flex flex-col min-h-screen max-w-5xl mx-auto px-4 md:px-6">
     
     <header class="h-16 shrink-0 border-b border-[#1c1f26] flex items-center justify-between bg-[#0b0c0e]">
       <div class="flex items-center gap-3">
@@ -42,16 +42,12 @@ import ChatConsole from '../components/ChatConsole.astro';
             <span class="h-2 w-2 rounded-full bg-[#84a98c] shadow-[0_0_6px_#84a98c]" id="dot-supervisor"></span>
             <span class="text-slate-200 font-medium">Orchestrator</span>
           </div>
-
           <span class="text-slate-700 hidden sm:inline text-sm">→</span>
-
           <div id="trace-vector" class="flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all">
             <span class="h-2 w-2 rounded-full bg-slate-800" id="dot-vector"></span>
             <span>Local_Vector</span>
           </div>
-
           <span class="text-slate-700 hidden sm:inline text-sm">→</span>
-
           <div id="trace-wan" class="flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all">
             <span class="h-2 w-2 rounded-full bg-slate-800" id="dot-wan"></span>
             <span>WAN_Compliance</span>
@@ -60,9 +56,58 @@ import ChatConsole from '../components/ChatConsole.astro';
       </div>
     </section>
 
-    <main class="flex-1 min-h-0 py-5">
+    <main class="flex-1 min-h-0 py-5 flex flex-col">
       <ChatConsole />
     </main>
     
+    <div class="w-full bg-slate-900/40 border border-slate-800/80 rounded-lg p-6 shadow-2xl backdrop-blur-md my-4 shrink-0">
+      <div class="flex items-center space-x-2.5 mb-4">
+        <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+        <h4 class="text-xs font-bold tracking-widest text-slate-400 uppercase font-mono">System Lifecycle Insights</h4>
+      </div>
+      
+      <p class="text-sm text-slate-400 mb-6 leading-relaxed max-w-3xl">
+        This multi-agent auditing engine executes entirely on distributed serverless tiers. If the infrastructure has been idle, please allow up to 60 seconds for the backend multi-worker container processes to complete a clean boot sequence.
+      </p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-slate-300">
+        <div class="flex items-start space-x-3.5 bg-slate-950/40 border border-slate-800/30 rounded-md p-4">
+          <span class="flex items-center justify-center shrink-0 w-6 h-6 rounded bg-slate-800 font-mono text-xs text-emerald-400 font-bold border border-slate-700">01</span>
+          <div>
+            <strong class="text-slate-200 block mb-1">Upstash Serverless Redis</strong>
+            <span class="text-xs text-slate-500 leading-normal">Validating user IP nodes inside the stateless pure-memory token-bucket rate limiter map.</span>
+          </div>
+        </div>
+        
+        <div class="flex items-start space-x-3.5 bg-slate-950/40 border border-slate-800/30 rounded-md p-4">
+          <span class="flex items-center justify-center shrink-0 w-6 h-6 rounded bg-slate-800 font-mono text-xs text-blue-400 font-bold border border-slate-700">02</span>
+          <div>
+            <strong class="text-slate-200 block mb-1">Render Core Processing</strong>
+            <span class="text-xs text-slate-500 leading-normal">Routing multi-tenant multipart stream files to 4 concurrent sandboxed Docker sub-workers.</span>
+          </div>
+        </div>
+        
+        <div class="flex items-start space-x-3.5 bg-slate-950/40 border border-slate-800/30 rounded-md p-4">
+          <span class="flex items-center justify-center shrink-0 w-6 h-6 rounded bg-slate-800 font-mono text-xs text-purple-400 font-bold border border-slate-700">03</span>
+          <div>
+            <strong class="text-slate-200 block mb-1">Reactive Front-End Stream</strong>
+            <span class="text-xs text-slate-500 leading-normal">Aggregating real-time tokens emitted from the LangGraph supervisor directly onto the Astro canvas.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="w-full text-center py-6 border-t border-slate-800 bg-slate-900/50 mt-auto text-xs sm:text-sm text-slate-400 shrink-0">
+      <p>
+        Developed, created & deployed by 
+        <a href="https://maodas.online" target="_blank" rel="noopener noreferrer" class="text-emerald-400 font-medium hover:underline transition">
+          Marcos R.
+        </a> 
+        • Supported by 
+        <a href="https://logox.tech" target="_blank" rel="noopener noreferrer" class="text-blue-400 font-medium hover:underline transition">
+          Logox
+        </a>
+      </p>
+    </footer>
   </div>
 </Layout>

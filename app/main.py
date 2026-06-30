@@ -1,11 +1,10 @@
-# app/main.py
 import asyncio
 import os
 import shutil
 import json
 import time  
-import redis.asyncio as aioredis  # <--- ADDED ASYNC REDIS CONNECTOR
-from fastapi import FastAPI, UploadFile, File, HTTPException, Body
+import redis.asyncio as aioredis  
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -14,10 +13,10 @@ from ingest import ingest_pdf_pipeline
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 from fastapi import Request
+from app.graph import run_agent_stream
 
 app = FastAPI(title="Agentic Auditor API", version="1.0.0")
 
-# Enable CORS for frontend frameworks (Astro / Tailwind)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -25,9 +24,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# --- STATELESS REDIS TOKEN BUCKET RATE LIMITER ---
-# app/main.py (Updated Limiter Section)
 
 class TokenBucketLimiter(BaseHTTPMiddleware):
     def __init__(self, app, max_tokens: int = 5, replenish_rate: float = 30.0):
@@ -42,16 +38,14 @@ class TokenBucketLimiter(BaseHTTPMiddleware):
             self.redis = aioredis.from_url(
                 f"redis://{redis_host}:6379", 
                 decode_responses=True,
-                socket_connect_timeout=2.0 # Don't hang indefinitely if Redis is missing
+                socket_connect_timeout=2.0 
             )
-        except Exception as e:
-            print(f"--- WARNING: Central Redis not reached ({str(e)}). Falling back to local in-memory storage ---")
+        except Exception:
             self.use_redis = False
 
     async def _get_updated_tokens(self, ip: str) -> float:
         current_time = time.time()
         
-        # --- PATH A: PRODUCTION CENTRALIZED REDIS ---
         if self.use_redis:
             try:
                 key = f"ratelimit:{ip}"
@@ -68,11 +62,9 @@ class TokenBucketLimiter(BaseHTTPMiddleware):
                 
                 await self.redis.hset(key, mapping={"tokens": new_tokens, "last_update": current_time})
                 return new_tokens
-            except Exception as e:
-                print(f"--- Redis Connection Lost mid-flight ({str(e)}). Shifting to local memory fallback ---")
+            except Exception:
                 self.use_redis = False
 
-        # --- PATH B: GRACEFUL IN-MEMORY FALLBACK ---
         if ip not in self.fallback_buckets:
             self.fallback_buckets[ip] = {"tokens": float(self.max_tokens), "last_update": current_time}
             return float(self.max_tokens)
@@ -104,13 +96,17 @@ class TokenBucketLimiter(BaseHTTPMiddleware):
                 try:
                     await self.redis.hincrbyfloat(f"ratelimit:{client_ip}", "tokens", -1.0)
                 except Exception:
+                    self.use_redis = False
+                    if client_ip not in self.fallback_buckets:
+                        self.fallback_buckets[client_ip] = {"tokens": available_tokens, "last_update": time.time()}
                     self.fallback_buckets[client_ip]["tokens"] -= 1.0
             else:
+                if client_ip not in self.fallback_buckets:
+                    self.fallback_buckets[client_ip] = {"tokens": available_tokens, "last_update": time.time()}
                 self.fallback_buckets[client_ip]["tokens"] -= 1.0
             
         return await call_next(request)
     
-# Register the Redis rate-limiting layer right underneath your CORS configuration
 app.add_middleware(TokenBucketLimiter, max_tokens=5, replenish_rate=30.0)
 
 class ChatMessage(BaseModel):
@@ -144,25 +140,14 @@ async def upload_document(file: UploadFile = File(...)):
             "filename": file.filename,
             "detected_sections": pipeline_result.get("sections")
         }
-        
     except Exception as e:
-        # --- ADDED FOR DEEP DEBUGGING IN DOCKER ---
-        import traceback
-        print("\n=== CRITICAL INGESTION EXCEPTION TRAIL ===")
-        print(traceback.format_exc())
-        print("==========================================\n")
-        raise HTTPException(status_code=500, detail=f"Internal ingestion failure: {str(e)}")
-        
+        raise HTTPException(status_code=500, detail=f"Internal Ingestion Failure: {str(e)}")
     finally:
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
 @app.post("/api/chat")
 async def chat_endpoint(payload: ChatRequest):
-    """
-    Orchestrates the chat experience via our LangGraph supervisor router 
-    and streams tokens back to the frontend in real-time.
-    """
     formatted_history = [{"role": msg.role, "content": msg.content} for msg in payload.history]
     query = payload.query.lower()
     
@@ -172,9 +157,7 @@ async def chat_endpoint(payload: ChatRequest):
     async def event_generator():
         try:
             yield f"data: {json.dumps({'type': 'metadata', 'badge': route_badge})}\n\n"
-            await asyncio.sleep(0.1) 
-            
-            from app.graph import run_agent_stream
+            await asyncio.sleep(0.05) 
             
             async for chunk in run_agent_stream(query=payload.query, chat_history=formatted_history):
                 if chunk["type"] == "token":
@@ -186,7 +169,7 @@ async def chat_endpoint(payload: ChatRequest):
                         yield f"data: {json.dumps({'type': 'metadata', 'badge': 'TRACE // EXECUTING_WAN_SEARCH'})}\n\n"
                 
         except asyncio.CancelledError:
-            print("System Event: Connection closed by client interface.")
+            pass
         except Exception as err:
             yield f"data: {json.dumps({'type': 'content', 'token': f' [Runtime Error: {str(err)}]'})}\n\n"
 

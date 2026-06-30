@@ -1,10 +1,7 @@
-# app/graph.py
 from langgraph.prebuilt import create_react_agent
 from langchain_groq import ChatGroq
-from langchain_core.messages import SystemMessage
 from app.tools.rag_tool import query_contract_segments, web_legal_search
 
-# Initialize the optimized ChatGroq instance
 llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 tools = [query_contract_segments, web_legal_search]
 
@@ -28,26 +25,23 @@ agent_executor = create_react_agent(
 )
 
 async def run_agent_stream(query: str, chat_history: list = None):
-    """
-    Asynchronously executes the LangGraph agent framework and yields raw chunks 
-    of content (and tool updates) in real time as they arrive from the model engine.
-    """
     if chat_history is None:
         chat_history = []
         
     messages = chat_history + [{"role": "user", "content": query}]
     
-    # Using astream_events v2 allows us to monitor exactly when the model emits tokens
-    async for event in agent_executor.astream_events({"messages": messages}, version="v2"):
+    graph_config = {
+        "configurable": {"thread_id": "auditor_session"},
+        "recursion_limit": 50
+    }
+    
+    async for event in agent_executor.astream_events({"messages": messages}, config=graph_config, version="v2"):
         event_type = event.get("event")
         
-        # Capture raw LLM tokens stream chunks from the supervisor model
         if event_type == "on_chat_model_stream":
             chunk = event["data"].get("chunk")
             if chunk and chunk.content:
                 yield {"type": "token", "content": chunk.content}
                 
-        # Optional Telemetry: Catch exactly when a tool gets invoked by the graph router
         elif event_type == "on_tool_start":
-            tool_name = event.get("name")
-            yield {"type": "tool_start", "tool": tool_name}
+            yield {"type": "tool_start", "tool": event.get("name")}

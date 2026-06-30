@@ -1,8 +1,7 @@
-# app/tools/rag_tool.py
 import os
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain_community.vectorstores import SupabaseVectorStore
 from supabase.client import create_client
 from dotenv import load_dotenv
@@ -10,10 +9,12 @@ from duckduckgo_search import DDGS
 
 load_dotenv()
 
-# --- PRODUCTION OPTIMIZATION: HOT GLOBAL INSTANCES ---
-# These are loaded ONCE when the app initializes, preventing severe memory and network bottlenecks.
 supabase_client = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_KEY"))
-embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+embedding_model = HuggingFaceInferenceAPIEmbeddings(
+    api_key=os.environ.get("HF_TOKEN"),
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
 class DynamicLegalQuerySchema(BaseModel):
     query: str = Field(description="The specific question or clause to search for.")
@@ -23,7 +24,6 @@ class DynamicLegalQuerySchema(BaseModel):
     )
 
 def get_rag_retriever(section_filter=None):
-    # Reuses global connection pools safely across concurrent streams
     vector_store = SupabaseVectorStore(
         client=supabase_client,
         embedding=embedding_model,
