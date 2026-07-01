@@ -1,5 +1,3 @@
----
----
 <div id="chat-console" class="bg-[#121418] border border-[#1c1f26] rounded-md flex flex-col h-[600px] shadow-2xl overflow-hidden">
   <div id="pillars-container" class="bg-[#0b0c0e] border-b border-[#1c1f26] px-4 py-3 hidden">
     <span class="text-[9px] uppercase font-bold font-mono tracking-widest text-slate-500 block mb-2">TARGET SUBSURFACE SECTOR INTAKES:</span>
@@ -47,7 +45,7 @@
   const pillsWrapper = document.getElementById('pills-wrapper');
 
   const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'https://agentic-auditor.onrender.com';
-  
+
   window.addEventListener('document-processed', (e: any) => {
     if (!pillarsContainer || !pillsWrapper || !userInput) return;
     
@@ -81,6 +79,8 @@
     const traceWan = document.getElementById('trace-wan');
     const dotWan = document.getElementById('dot-wan');
 
+    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+
     try {
       const response = await fetch(`${API_BASE_URL.replace(/\/$/, '')}/api/chat`, {
         method: 'POST',
@@ -93,7 +93,7 @@
         const messageElement = createAssistantPlaceholder();
         const bodyTextEl = messageElement.querySelector('.body-text') as HTMLElement;
         const badgeContainer = messageElement.querySelector('.badge-container') as HTMLElement;
-        
+
         messageElement.classList.remove('border-[#1c1f26]/60');
         messageElement.classList.add('border-amber-500/20', 'bg-amber-950/10');
         badgeContainer.innerHTML = `<span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-400/40">HTTP 429 // ACCESS_DENIED</span>`;
@@ -104,7 +104,7 @@
       }
 
       if (!response.body) throw new Error("No readable stream channel.");
-      const reader = response.body.getReader();
+      reader = response.body.getReader();
       const decoder = new TextDecoder();
       
       const messageElement = createAssistantPlaceholder();
@@ -157,6 +157,9 @@
     } catch (error) {
       console.error(error);
     } finally {
+      if (reader) {
+        reader.releaseLock();
+      }
       setTimeout(() => {
         traceVector?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all');
         dotVector?.setAttribute('class', 'h-2 w-2 rounded-full bg-slate-800');
@@ -169,7 +172,7 @@
   function appendUserMessage(text: string) {
     const chatArena = document.getElementById('chat-arena');
     if (!chatArena) return;
-    
+
     const div = document.createElement('div');
     div.className = 'border rounded-md p-5 bg-[#181b22]/40 border-[#1c1f26] text-slate-200 max-w-full overflow-hidden min-w-0';
     div.innerHTML = `
@@ -185,7 +188,7 @@
   function createAssistantPlaceholder() {
     const chatArena = document.getElementById('chat-arena');
     if (!chatArena) return document.createElement('div');
-    
+
     const div = document.createElement('div');
     div.className = 'border rounded-md p-5 bg-[#0b0c0e]/60 border-[#1c1f26]/60 text-slate-300 max-w-full overflow-hidden min-w-0';
     div.innerHTML = `
