@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
