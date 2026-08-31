@@ -21,5 +21,45 @@ const { title } = Astro.props;
 	</head>
 	<body class="min-h-screen font-sans antialiased bg-slate-50 text-slate-900">
 		<slot />
+
+		<script is:inline>
+			window.setLanguage = function(lang) {
+				localStorage.setItem('app-lang', lang);
+				document.documentElement.lang = lang;
+				
+				document.querySelectorAll('[data-en]').forEach((el) => {
+					const translation = el.getAttribute(`data-${lang}`);
+					if (translation !== null) {
+						el.textContent = translation;
+					}
+				});
+
+				document.querySelectorAll('[data-en-placeholder]').forEach((el) => {
+					const translation = el.getAttribute(`data-${lang}-placeholder`);
+					if (translation !== null) {
+						el.setAttribute('placeholder', translation);
+					}
+				});
+
+				const btnEn = document.getElementById('lang-btn-en');
+				const btnEs = document.getElementById('lang-btn-es');
+				if (btnEn && btnEs) {
+					if (lang === 'en') {
+						btnEn.className = "px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-2xs transition-all";
+						btnEs.className = "px-3 py-1 text-xs font-medium rounded-md bg-transparent text-slate-600 hover:text-slate-900 transition-all";
+					} else {
+						btnEs.className = "px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-2xs transition-all";
+						btnEn.className = "px-3 py-1 text-xs font-medium rounded-md bg-transparent text-slate-600 hover:text-slate-900 transition-all";
+					}
+				}
+
+				window.dispatchEvent(new CustomEvent('language-changed', { detail: { lang } }));
+			};
+
+			document.addEventListener('DOMContentLoaded', () => {
+				const savedLang = localStorage.getItem('app-lang') || 'en';
+				window.setLanguage(savedLang);
+			});
+		</script>
 	</body>
 </html>

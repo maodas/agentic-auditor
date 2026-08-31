@@ -1,52 +1,74 @@
 ---
 ---
-<div id="chat-console" class="bg-white border border-slate-200 rounded-2xl flex flex-col h-[650px] shadow-sm overflow-hidden">
+<div id="chat-console" class="bg-white border border-slate-200 rounded-2xl flex flex-col h-[680px] shadow-sm overflow-hidden">
   <!-- Agent Routing Matrix Header Bar -->
-  <div class="bg-slate-50/80 border-b border-slate-200 px-5 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
-    <div class="flex items-center gap-2">
-      <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
-      <h3 class="text-xs font-bold text-slate-700 tracking-wider uppercase font-mono">Agentic Legal Auditor</h3>
+  <div class="bg-slate-50/80 border-b border-slate-200 px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+    <div class="flex items-center gap-2.5">
+      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+      <h3 
+        class="text-sm font-bold text-slate-800 tracking-wider uppercase font-mono"
+        data-en="Agentic Legal Auditor"
+        data-es="Auditor Legal Agéntico"
+      >
+        Agentic Legal Auditor
+      </h3>
     </div>
     
     <!-- Active Traces -->
-    <div class="flex items-center gap-2 text-xs">
+    <div class="flex items-center gap-2 text-xs sm:text-sm">
       <div id="trace-supervisor" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 font-medium shadow-2xs">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-        <span>Orchestrator</span>
+        <span data-en="Orchestrator" data-es="Orquestador">Orchestrator</span>
       </div>
       <span class="text-slate-300">→</span>
       <div id="trace-vector" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-400 transition-all">
         <span class="w-1.5 h-1.5 rounded-full bg-slate-300" id="dot-vector"></span>
-        <span>RAG Tool</span>
+        <span data-en="RAG Tool" data-es="Herramienta RAG">RAG Tool</span>
       </div>
       <span class="text-slate-300">→</span>
       <div id="trace-wan" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-400 transition-all">
         <span class="w-1.5 h-1.5 rounded-full bg-slate-300" id="dot-wan"></span>
-        <span>Web Search</span>
+        <span data-en="Web Search" data-es="Búsqueda Web">Web Search</span>
       </div>
     </div>
   </div>
 
   <!-- Chat Arena -->
-  <div id="chat-arena" class="flex-1 p-5 overflow-y-auto space-y-4 bg-slate-50/30 text-sm custom-scrollbar">
+  <div id="chat-arena" class="flex-1 p-5 overflow-y-auto space-y-5 bg-slate-50/30 text-base custom-scrollbar">
     <!-- Welcome message card -->
-    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3 max-w-2xl">
-      <div class="flex items-center gap-2.5">
-        <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs space-y-4 max-w-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
           AI
         </div>
         <div>
-          <h4 class="text-sm font-semibold text-slate-900">Legal Audit Assistant Ready</h4>
-          <p class="text-xs text-slate-500">Autonomous contract inspection & compliance verification</p>
+          <h4 
+            class="text-base sm:text-lg font-semibold text-slate-900"
+            data-en="Legal Audit Assistant Ready"
+            data-es="Asistente de Auditoría Legal Listo"
+          >
+            Legal Audit Assistant Ready
+          </h4>
+          <p 
+            class="text-xs sm:text-sm text-slate-500"
+            data-en="Autonomous contract inspection & compliance verification"
+            data-es="Inspección autónoma de contratos y verificación de cumplimiento"
+          >
+            Autonomous contract inspection & compliance verification
+          </p>
         </div>
       </div>
-      <p class="text-sm text-slate-600 leading-relaxed">
+      <p 
+        class="text-base text-slate-600 leading-relaxed"
+        data-en="Upload a legal PDF contract on the left to extract document chunks and section boundaries, or ask general corporate compliance questions directly below."
+        data-es="Cargue un contrato PDF legal a la izquierda para extraer fragmentos y secciones del documento, o consulte dudas generales de cumplimiento normativo abajo."
+      >
         Upload a legal PDF contract on the left to extract document chunks and section boundaries, or ask general corporate compliance questions directly below.
       </p>
-      <div class="pt-2 border-t border-slate-100 flex flex-wrap gap-2 text-xs text-slate-500">
-        <span class="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-600">• Single-document isolation</span>
-        <span class="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-600">• Groq Qwen-3.6 27B</span>
-        <span class="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-600">• Dynamic RAG indexing</span>
+      <div class="pt-2 border-t border-slate-100 flex flex-wrap gap-2 text-xs sm:text-sm text-slate-600">
+        <span class="px-3 py-1 rounded-md bg-slate-100 border border-slate-200" data-en="• Single-document isolation" data-es="• Aislamiento por documento único">• Single-document isolation</span>
+        <span class="px-3 py-1 rounded-md bg-slate-100 border border-slate-200" data-en="• Groq Qwen-3.6 27B" data-es="• Groq Qwen-3.6 27B">• Groq Qwen-3.6 27B</span>
+        <span class="px-3 py-1 rounded-md bg-slate-100 border border-slate-200" data-en="• Dynamic RAG indexing" data-es="• Indexación RAG dinámica">• Dynamic RAG indexing</span>
       </div>
     </div>
   </div>
@@ -57,14 +79,16 @@
       type="text" 
       id="user-input" 
       placeholder="Ask about payment terms, liabilities, termination clauses..." 
+      data-en-placeholder="Ask about payment terms, liabilities, termination clauses..."
+      data-es-placeholder="Consulte sobre plazos de pago, responsabilidades, cláusulas de rescisión..."
       autocomplete="off" 
       class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
     />
     <button 
       type="submit" 
-      class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-3.5 rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-2 text-sm shrink-0"
+      class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-3.5 rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-2 text-base shrink-0"
     >
-      <span>Send</span>
+      <span data-en="Send" data-es="Enviar">Send</span>
       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
       </svg>
@@ -112,7 +136,7 @@
 
         messageElement.classList.remove('bg-white', 'border-slate-200');
         messageElement.classList.add('bg-amber-50', 'border-amber-200');
-        badgeContainer.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300">HTTP 429 // RATE LIMIT</span>`;
+        badgeContainer.innerHTML = `<span class="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300">HTTP 429 // RATE LIMIT</span>`;
         bodyTextEl.innerText = errorData.message || 'Rate limit exceeded. Please wait a moment before sending another message.';
         bodyTextEl.classList.remove('animate-pulse', 'text-slate-400');
         bodyTextEl.classList.add('text-amber-900');
@@ -149,7 +173,7 @@
                 traceVector?.setAttribute('class', 'flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 font-medium transition-all');
                 if (dotVector) dotVector.setAttribute('class', 'w-1.5 h-1.5 rounded-full bg-indigo-600 shadow-[0_0_6px_rgba(79,70,229,0.5)]');
               }
-              badgeContainer.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">${parsed.badge}</span>`;
+              badgeContainer.innerHTML = `<span class="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">${parsed.badge}</span>`;
             } 
             
             if (parsed.type === 'content') {
@@ -189,13 +213,14 @@
     const chatArena = document.getElementById('chat-arena');
     if (!chatArena) return;
 
+    const currentLang = localStorage.getItem('app-lang') || 'en';
     const div = document.createElement('div');
-    div.className = 'bg-slate-900 text-white rounded-2xl p-4 shadow-sm text-sm max-w-[85%] ml-auto space-y-1';
+    div.className = 'bg-slate-900 text-white rounded-2xl p-4 shadow-sm text-base max-w-[85%] ml-auto space-y-1';
     div.innerHTML = `
-      <div class="flex items-center justify-end gap-1.5 text-[10px] text-slate-400 font-semibold tracking-wider uppercase">
-        <span>YOU</span>
+      <div class="flex items-center justify-end gap-1.5 text-xs text-slate-400 font-semibold tracking-wider uppercase">
+        <span>${currentLang === 'es' ? 'TÚ' : 'YOU'}</span>
       </div>
-      <p class="text-sm leading-relaxed text-slate-100 break-words whitespace-pre-wrap">${text}</p>
+      <p class="text-base leading-relaxed text-slate-100 break-words whitespace-pre-wrap">${text}</p>
     `;
     chatArena.appendChild(div);
     chatArena.scrollTop = chatArena.scrollHeight;
@@ -205,17 +230,18 @@
     const chatArena = document.getElementById('chat-arena');
     if (!chatArena) return document.createElement('div');
 
+    const currentLang = localStorage.getItem('app-lang') || 'en';
     const div = document.createElement('div');
-    div.className = 'bg-white border border-slate-200 text-slate-800 rounded-2xl p-4 shadow-sm text-sm max-w-[90%] mr-auto space-y-2';
+    div.className = 'bg-white border border-slate-200 text-slate-800 rounded-2xl p-4 shadow-sm text-base max-w-[90%] mr-auto space-y-2';
     div.innerHTML = `
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <div class="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px]">AI</div>
-          <span class="text-xs font-semibold text-slate-700">Legal Auditor</span>
+          <div class="w-6 h-6 rounded-md bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">AI</div>
+          <span class="text-sm font-semibold text-slate-700">${currentLang === 'es' ? 'Auditor Legal' : 'Legal Auditor'}</span>
         </div>
         <div class="badge-container"></div>
       </div>
-      <p class="body-text text-sm leading-relaxed text-slate-400 animate-pulse break-words whitespace-pre-wrap">Thinking...</p>
+      <p class="body-text text-base leading-relaxed text-slate-400 animate-pulse break-words whitespace-pre-wrap">${currentLang === 'es' ? 'Pensando...' : 'Thinking...'}</p>
     `;
     chatArena.appendChild(div);
     chatArena.scrollTop = chatArena.scrollHeight;

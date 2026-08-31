@@ -9,27 +9,64 @@ import ChatConsole from '../components/ChatConsole.astro';
   <div class="min-h-screen flex flex-col max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
     
     <!-- Top Enterprise Header -->
-    <header class="bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-sm flex items-center justify-between mb-6 shrink-0">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <header class="bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-sm flex flex-wrap items-center justify-between gap-4 mb-6 shrink-0">
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="font-bold text-base text-slate-900 tracking-tight">Agentic Auditor</h1>
-            <span class="text-[10px] font-mono font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-full uppercase">
+          <div class="flex items-center gap-2.5">
+            <h1 
+              class="font-bold text-xl sm:text-2xl text-slate-900 tracking-tight"
+              data-en="Agentic Auditor"
+              data-es="Auditor Agéntico"
+            >
+              Agentic Auditor
+            </h1>
+            <span class="text-xs font-mono font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-0.5 rounded-full uppercase">
               V1.0 Enterprise
             </span>
           </div>
-          <p class="text-xs text-slate-500">Autonomous Multi-Agent Legal Compliance Engine</p>
+          <p 
+            class="text-sm text-slate-500 mt-0.5"
+            data-en="Autonomous Multi-Agent Legal Compliance Engine"
+            data-es="Motor Autónomo Multi-Agente de Cumplimiento Legal"
+          >
+            Autonomous Multi-Agent Legal Compliance Engine
+          </p>
         </div>
       </div>
       
-      <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span>System Operational</span>
+      <!-- Right Controls: Status + Bilingual Switcher -->
+      <div class="flex items-center gap-3">
+        <!-- Status Indicator -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs sm:text-sm font-medium">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span data-en="System Operational" data-es="Sistema Operativo">System Operational</span>
+        </div>
+
+        <!-- EN / ES Language Toggle -->
+        <div class="flex items-center p-1 bg-slate-100 border border-slate-200 rounded-lg shadow-2xs font-mono text-xs">
+          <span class="px-2 text-slate-400 select-none">🌐</span>
+          <button 
+            type="button" 
+            id="lang-btn-en" 
+            onclick="window.setLanguage('en')" 
+            class="px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-2xs transition-all cursor-pointer"
+          >
+            EN
+          </button>
+          <button 
+            type="button" 
+            id="lang-btn-es" 
+            onclick="window.setLanguage('es')" 
+            class="px-3 py-1 text-xs font-medium rounded-md bg-transparent text-slate-600 hover:text-slate-900 transition-all cursor-pointer"
+          >
+            ES
+          </button>
+        </div>
       </div>
     </header>
 
@@ -42,8 +79,14 @@ import ChatConsole from '../components/ChatConsole.astro';
         <!-- Document Upload Card -->
         <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <div class="flex items-center justify-between">
-            <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider font-mono">01 // Document Attachment</h2>
-            <span class="text-xs text-slate-400">PDF Contracts</span>
+            <h2 
+              class="text-sm font-bold text-slate-700 uppercase tracking-wider font-mono"
+              data-en="01 // Document Attachment"
+              data-es="01 // Adjuntar Documento"
+            >
+              01 // Document Attachment
+            </h2>
+            <span class="text-xs sm:text-sm text-slate-500 font-medium" data-en="PDF Contracts" data-es="Contratos PDF">PDF Contracts</span>
           </div>
           <IngestionZone />
         </div>
@@ -52,38 +95,84 @@ import ChatConsole from '../components/ChatConsole.astro';
         <ControlPills />
 
         <!-- System Infrastructure & Lifecycle Card -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
           <div class="flex items-center space-x-2">
-            <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
-            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider font-mono">Infrastructure Overview</h3>
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+            <h3 
+              class="text-base sm:text-lg font-semibold text-slate-800"
+              data-en="Infrastructure Overview"
+              data-es="Resumen de Infraestructura"
+            >
+              Infrastructure Overview
+            </h3>
           </div>
           
-          <p class="text-xs text-slate-600 leading-relaxed">
+          <p 
+            class="text-sm text-slate-600 leading-relaxed"
+            data-en="Stateless multi-agent serverless architecture configured for automatic clean slate indexing on contract ingestion."
+            data-es="Arquitectura serverless multi-agente configurada para indexación limpia automática al cargar cada contrato."
+          >
             Stateless multi-agent serverless architecture configured for automatic clean slate indexing on contract ingestion.
           </p>
           
-          <div class="space-y-3 text-xs">
-            <div class="flex items-start gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-              <span class="w-5 h-5 rounded-md bg-indigo-100 text-indigo-700 font-bold text-[10px] flex items-center justify-center shrink-0">01</span>
+          <div class="space-y-3 text-sm">
+            <div class="flex items-start gap-3 p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+              <span class="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">01</span>
               <div>
-                <strong class="text-slate-800 font-medium block">Upstash Serverless Redis</strong>
-                <span class="text-slate-500 leading-normal text-[11px]">Token-bucket rate limiting maps IP requests safely across stateless workers.</span>
+                <strong 
+                  class="text-slate-800 font-semibold block mb-0.5"
+                  data-en="Upstash Serverless Redis"
+                  data-es="Upstash Redis Serverless"
+                >
+                  Upstash Serverless Redis
+                </strong>
+                <span 
+                  class="text-slate-500 leading-normal text-xs sm:text-sm"
+                  data-en="Token-bucket rate limiting maps IP requests safely across stateless workers."
+                  data-es="Limitación de tasa token-bucket mapea solicitudes IP de forma segura entre trabajadores."
+                >
+                  Token-bucket rate limiting maps IP requests safely across stateless workers.
+                </span>
               </div>
             </div>
 
-            <div class="flex items-start gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-              <span class="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 font-bold text-[10px] flex items-center justify-center shrink-0">02</span>
+            <div class="flex items-start gap-3 p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+              <span class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center shrink-0">02</span>
               <div>
-                <strong class="text-slate-800 font-medium block">Supabase Vector Storage</strong>
-                <span class="text-slate-500 leading-normal text-[11px]">High-dimensional pgvector embeddings with Hugging Face sentence-transformers.</span>
+                <strong 
+                  class="text-slate-800 font-semibold block mb-0.5"
+                  data-en="Supabase Vector Storage"
+                  data-es="Almacenamiento Vectorial Supabase"
+                >
+                  Supabase Vector Storage
+                </strong>
+                <span 
+                  class="text-slate-500 leading-normal text-xs sm:text-sm"
+                  data-en="High-dimensional pgvector embeddings with Hugging Face sentence-transformers."
+                  data-es="Embeddings pgvector de alta dimensión con sentence-transformers de Hugging Face."
+                >
+                  High-dimensional pgvector embeddings with Hugging Face sentence-transformers.
+                </span>
               </div>
             </div>
 
-            <div class="flex items-start gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-              <span class="w-5 h-5 rounded-md bg-purple-100 text-purple-700 font-bold text-[10px] flex items-center justify-center shrink-0">03</span>
+            <div class="flex items-start gap-3 p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+              <span class="w-6 h-6 rounded-md bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center shrink-0">03</span>
               <div>
-                <strong class="text-slate-800 font-medium block">Render Serverless Core</strong>
-                <span class="text-slate-500 leading-normal text-[11px]">FastAPI application gateway streaming real-time tokens via LangGraph events.</span>
+                <strong 
+                  class="text-slate-800 font-semibold block mb-0.5"
+                  data-en="Render Serverless Core"
+                  data-es="Núcleo de Servidor Render"
+                >
+                  Render Serverless Core
+                </strong>
+                <span 
+                  class="text-slate-500 leading-normal text-xs sm:text-sm"
+                  data-en="FastAPI application gateway streaming real-time tokens via LangGraph events."
+                  data-es="Pasarela FastAPI transmitiendo tokens en tiempo real mediante eventos LangGraph."
+                >
+                  FastAPI application gateway streaming real-time tokens via LangGraph events.
+                </span>
               </div>
             </div>
           </div>
@@ -99,13 +188,13 @@ import ChatConsole from '../components/ChatConsole.astro';
     </main>
 
     <!-- Footer -->
-    <footer class="w-full text-center py-6 border-t border-slate-200 mt-8 text-xs text-slate-500 shrink-0">
+    <footer class="w-full text-center py-6 border-t border-slate-200 mt-8 text-sm text-slate-500 shrink-0">
       <p>
-        Developed & engineered by 
+        <span data-en="Developed & engineered by" data-es="Desarrollado e ingeniado por">Developed & engineered by</span> 
         <a href="https://maodas.online" target="_blank" rel="noopener noreferrer" class="text-indigo-600 font-semibold hover:underline">
           Marcos R.
         </a> 
-        — Autonomous Multi-Agent Contract Auditor
+        — <span data-en="Autonomous Multi-Agent Contract Auditor" data-es="Auditor Autónomo de Contratos Multi-Agente">Autonomous Multi-Agent Contract Auditor</span>
       </p>
     </footer>
 
