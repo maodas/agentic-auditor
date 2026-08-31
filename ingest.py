@@ -102,6 +102,14 @@ def ingest_pdf_pipeline(file_path: str) -> Dict[str, Any]:
         
     print(f"Verification Passed. Detected Sections: {sections}")
     
+    # Clean Slate: Clear existing document records from Supabase vector table before inserting new document chunks
+    try:
+        print("Executing Clean Slate: Purging existing records from Supabase documents table...")
+        supabase.table("documents").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        print("Clean Slate executed successfully.")
+    except Exception as e:
+        print(f"Warning during Clean Slate table purge: {str(e)}")
+    
     for doc in docs:
         doc.metadata["filename"] = os.path.basename(file_path)
         doc.metadata["discovered_sections"] = sections

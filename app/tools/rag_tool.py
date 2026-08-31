@@ -52,9 +52,12 @@ def query_contract_segments(query: str, section: str = "general") -> str:
     docs = retriever.invoke(query)
     
     if not docs:
-        retriever_fallback = get_rag_retriever(section_filter="general")
+        retriever_fallback = get_rag_retriever(section_filter=None)
         docs = retriever_fallback.invoke(query)
         
+    if not docs:
+        return f"No relevant legal segments found in the document for query: '{query}'."
+
     return f"--- Context isolated from section [{section}] ---\n\n" + "\n\n".join([d.page_content for d in docs])
 
 @tool("web_legal_search")
