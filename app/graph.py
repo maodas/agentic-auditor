@@ -54,13 +54,22 @@ async def run_agent_stream(
         "recursion_limit": 50
     }
     
-    async for event in agent_executor.astream_events({"messages": messages}, config=graph_config, version="v2"):
-        event_type = event.get("event")
-        
-        if event_type == "on_chat_model_stream":
-            chunk = event["data"].get("chunk")
-            if chunk and chunk.content:
-                yield {"type": "token", "content": chunk.content}
+    token_emitted = False
+    try:
+        async for event in agent_executor.astream_events({"messages": messages}, config=graph_config, version="v2"):
+            event_type = event.get("event")
+            
+            if event_type == "on_chat_model_stream":
+                chunk = event["data"].get("chunk")
+                if chunk and chunk.content:
+                    token_emitted = True
+                    yield {"type": "token", "content": chunk.content}
+                    
+            elif event_type == "on_tool_start":
+                yield {"type": "tool_start", "tool": event.get("name")}
                 
-        elif event_type == "on_tool_start":
-            yield {"type": "tool_start", "tool": event.get("name")}
+        if not token_emitted:
+            yield {"type": "token", "content": "The requested information could not be verified in the active legal context."}
+    except Exception as e:
+        print(f"Error during agent stream execution: {str(e)}")
+        yield {"type": "token", "content": "The requested information could not be verified in the active legal context."}

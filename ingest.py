@@ -16,23 +16,27 @@ def validate_and_extract_sections(full_text: str) -> Dict[str, Any]:
     Evaluates document structural liability bounds using a foundational model LLM 
     to extract isolated sections and run a compliance validation filter.
     """
-    llm = ChatGroq(model="qwen/qwen3.6-27b", temperature=0)
+    llm = ChatGroq(
+        model="qwen/qwen3.6-27b", 
+        temperature=0,
+        model_kwargs={"response_format": {"type": "json_object"}}
+    )
     
     prompt = f"""
     Analyze the following snippet of an uploaded document.
     
     CRITICAL CLASSIFICATION BOUNDARIES:
-    1. The document MUST be a legally binding, fully executed legal contract, agreement, corporate policy, corporate charter, or formal statutory regulation to pass.
-    2. You MUST fail/reject the document (is_legal = false) if it is a commercial proposal, technical proposal, marketing/sales pitch, commercial quotation, resume/CV, project report, or a Statement of Work (SOW) that focuses primarily on engineering/business deliverables rather than binding legal liability.
+    1. The document MUST be a legally binding, fully executed legal contract, agreement, corporate policy, corporate charter, or formal statutory regulation to pass (is_legal_contract = true).
+    2. You MUST fail/reject the document (is_legal_contract = false) if it is a commercial proposal, technical proposal, marketing/sales pitch, commercial quotation, resume/CV, project report, or a Statement of Work (SOW) that focuses primarily on engineering/business deliverables rather than binding legal liability.
     3. Even if a technical proposal contains minor boilerplate legal rows (like confidentiality or a short copyright notice), it is still classified as a PROPOSAL, and you MUST reject it.
 
     Identify up to 3 main operational or business themes if it passes validation (e.g., Payment, Liability, Support Staff, Notices, Termination).
     
-    Respond STRICTLY in the following raw JSON format, with no extra conversational text or markdown code block wrapping:
+    Respond STRICTLY in JSON format with no extra conversational text or markdown code block wrapping:
     {{
-        "is_legal": false,
-        "reasoning": "Specify exactly why the document was rejected.",
-        "sections": []
+        "is_legal_contract": false,
+        "reason": "Specify exactly why the document was accepted or rejected.",
+        "detected_sections": []
     }}
     
     Document snippet text:
@@ -41,11 +45,30 @@ def validate_and_extract_sections(full_text: str) -> Dict[str, Any]:
     
     try:
         response = llm.invoke([HumanMessage(content=prompt)])
-        clean_content = response.content.strip().lstrip("```json").rstrip("```")
-        return json.loads(clean_content)
+        content = response.content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        parsed = json.loads(content)
+        
+        is_legal = parsed.get("is_legal_contract", parsed.get("is_legal", False))
+        reason = parsed.get("reason", parsed.get("reasoning", "Document rejected: Not an auditable legal agreement."))
+        sections = parsed.get("detected_sections", parsed.get("sections", []))
+        
+        return {
+            "is_legal_contract": bool(is_legal),
+            "reason": str(reason),
+            "detected_sections": sections if isinstance(sections, list) else []
+        }
     except Exception as e:
         print(f"Error during structural classification pipeline parsing: {str(e)}")
-        return {"is_legal": True, "reasoning": "Fallback extraction", "sections": ["General", "Terms"]}
+        return {
+            "is_legal_contract": False,
+            "reason": f"Classification parsing failure: {str(e)}",
+            "detected_sections": []
+        }
 
 def ingest_pdf_pipeline(file_path: str) -> Dict[str, Any]:
     """
@@ -67,21 +90,25 @@ def ingest_pdf_pipeline(file_path: str) -> Dict[str, Any]:
     full_text = " ".join([d.page_content for d in docs])
     analysis = validate_and_extract_sections(full_text)
     
-    if not analysis.get("is_legal", False):
+    if not analysis.get("is_legal_contract", False):
         return {
             "success": False, 
-            "error": f"Document rejected. Reason: {analysis.get('reasoning')}"
+            "error": f"Document rejected. Reason: {analysis.get('reason', 'Not an auditable legal agreement.')}"
         }
         
-    print(f"Verification Passed. Detected Sections: {analysis['sections']}")
+    sections = analysis.get("detected_sections", ["General"])
+    if not sections:
+        sections = ["General"]
+        
+    print(f"Verification Passed. Detected Sections: {sections}")
     
     for doc in docs:
         doc.metadata["filename"] = os.path.basename(file_path)
-        doc.metadata["discovered_sections"] = analysis["sections"]
+        doc.metadata["discovered_sections"] = sections
         
         text_lower = doc.page_content.lower()
         matched_section = "general"
-        for section in analysis["sections"]:
+        for section in sections:
             if section.lower() in text_lower:
                 matched_section = section.lower()
                 break
@@ -97,5 +124,5 @@ def ingest_pdf_pipeline(file_path: str) -> Dict[str, Any]:
     return {
         "success": True,
         "message": "Pipeline Complete",
-        "sections": analysis["sections"]
+        "sections": sections
     }
