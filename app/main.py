@@ -113,6 +113,11 @@ class TokenBucketLimiter(BaseHTTPMiddleware):
     
 app.add_middleware(TokenBucketLimiter, max_tokens=5, replenish_rate=30.0)
 
+class UploadResponse(BaseModel):
+    status: str
+    filename: str
+    detected_sections: List[str] = []
+
 class ChatMessage(BaseModel):
     role: str  
     content: str
@@ -121,8 +126,8 @@ class ChatRequest(BaseModel):
     query: str
     history: Optional[List[ChatMessage]] = []
 
-@app.post("/api/upload")
-async def upload_document(file: UploadFile = File(...)) -> Dict[str, str]:
+@app.post("/api/upload", response_model=UploadResponse)
+async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF legal documents are supported.")
     
@@ -139,11 +144,16 @@ async def upload_document(file: UploadFile = File(...)) -> Dict[str, str]:
         if not pipeline_result.get("success"):
             raise HTTPException(status_code=422, detail=pipeline_result.get("error"))
             
-        return {
-            "status": "success",
-            "filename": file.filename,
-            "detected_sections": pipeline_result.get("sections")
-        }
+        sections = pipeline_result.get("sections", [])
+        detected_sections = sections if isinstance(sections, list) else [str(sections)]
+        
+        return UploadResponse(
+            status="success",
+            filename=file.filename,
+            detected_sections=detected_sections
+        )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal Ingestion Failure: {str(e)}")
     finally:

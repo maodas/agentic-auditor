@@ -74,3 +74,26 @@ def test_streaming_response_headers():
             
             first_line = next(response.iter_lines())
             assert first_line.startswith("data: ")
+
+
+def test_upload_endpoint_validation():
+    """
+    Verifies that /api/upload accepts PDF files and returns status, filename, and detected_sections list.
+    """
+    client = TestClient(app)
+    mock_pipeline_result = {
+        "success": True,
+        "sections": ["Payment", "Liability", "Termination"]
+    }
+    
+    with patch("app.main.TokenBucketLimiter._get_updated_tokens", return_value=10.0), \
+         patch("app.main.ingest_pdf_pipeline", return_value=mock_pipeline_result):
+        pdf_bytes = b"%PDF-1.4 Mock PDF Content"
+        files = {"file": ("test_contract.pdf", pdf_bytes, "application/pdf")}
+        response = client.post("/api/upload", files=files)
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["filename"] == "test_contract.pdf"
+        assert data["detected_sections"] == ["Payment", "Liability", "Termination"]
