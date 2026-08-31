@@ -33,9 +33,9 @@ The platform implements a stateless monorepo design, cleanly splitting execution
        | Load Vectors                     | Query RAG     | WAN Fallback
        v                                  v               v
 +-----------------------------+    +--------------+  +-----------+
-|   Supabase Vector Storage   |<---| llama-3.3-70b|  |DuckDuckGo |
-|     (pgvector / Match)      |    |  -versatile  |  | Web Tool  |
-+-----------------------------+    +--------------+  +-----------+
+|   Supabase Vector Storage   |<---|qwen/qwen3.6-27b |  |DuckDuckGo |
+|     (pgvector / Match)      |    |  (Groq Model)  |  | Web Tool  |
++-----------------------------+    +----------------+  +-----------+
 
 ```
 
@@ -43,7 +43,7 @@ The platform implements a stateless monorepo design, cleanly splitting execution
 
 1. **Edge Presentation Node:** Built via Astro and Tailwind CSS. Communicates with the service mesh via reactive event loops and manages Server-Sent Events (SSE) text token rendering.
 2. **Middleware Security Gateway:** A custom ASGI FastAPI Interceptor implementing a stateless Token-Bucket Rate Limiter to monitor client IP behaviors before forwarding inputs.
-3. **Cognitive Orchestration Fabric:** Orchestrated by LangGraph. Uses state-based routing nodes powered by llama-3.3-70b-versatile on Groq to isolate intent strings.
+3. **Cognitive Orchestration Fabric:** Orchestrated by LangGraph. Uses state-based routing nodes powered by qwen/qwen3.6-27b on Groq to isolate intent strings.
 4. **Decoupled Data Ingestion Engine:** Offloads heavy semantic text vectorization to Unstructured.io API Cloud Nodes, caching content securely in a Supabase Vector Store (pgvector) using remote Inference endpoints.
 
 ---
