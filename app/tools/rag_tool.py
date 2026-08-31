@@ -2,7 +2,7 @@ import os
 from typing import Optional
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_community.vectorstores import SupabaseVectorStore
 from supabase.client import create_client
 from dotenv import load_dotenv
@@ -12,9 +12,10 @@ load_dotenv()
 
 supabase_client = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_KEY"))
 
-embedding_model = HuggingFaceInferenceAPIEmbeddings(
-    api_key=os.environ.get("HF_TOKEN"),
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+embedding_model = HuggingFaceEndpointEmbeddings(
+    model="sentence-transformers/all-MiniLM-L6-v2",
+    provider="hf-inference",
+    huggingfacehub_api_token=os.environ.get("HF_TOKEN")
 )
 
 class DynamicLegalQuerySchema(BaseModel):

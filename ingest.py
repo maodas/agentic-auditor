@@ -3,7 +3,7 @@ import json
 from typing import Any, Dict
 from langchain_unstructured import UnstructuredLoader
 from langchain_community.vectorstores import SupabaseVectorStore
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage
 from supabase.client import create_client
@@ -16,7 +16,7 @@ def validate_and_extract_sections(full_text: str) -> Dict[str, Any]:
     Evaluates document structural liability bounds using a foundational model LLM 
     to extract isolated sections and run a compliance validation filter.
     """
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
+    llm = ChatGroq(model="qwen/qwen3.6-27b", temperature=0)
     
     prompt = f"""
     Analyze the following snippet of an uploaded document.
@@ -87,9 +87,10 @@ def ingest_pdf_pipeline(file_path: str) -> Dict[str, Any]:
                 break
         doc.metadata["section"] = matched_section
 
-    embedding_model = HuggingFaceInferenceAPIEmbeddings(
-        api_key=os.environ.get("HF_TOKEN"),
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model = HuggingFaceEndpointEmbeddings(
+        model="sentence-transformers/all-MiniLM-L6-v2",
+        provider="hf-inference",
+        huggingfacehub_api_token=os.environ.get("HF_TOKEN")
     )
     SupabaseVectorStore.from_documents(docs, embedding_model, client=supabase, table_name="documents")
     

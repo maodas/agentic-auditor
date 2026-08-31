@@ -3,7 +3,7 @@ from langchain_groq import ChatGroq
 from typing import AsyncGenerator, List, Dict, Optional
 from app.tools.rag_tool import query_contract_segments, web_legal_search
 
-llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
+llm = ChatGroq(model="qwen/qwen3.6-27b", temperature=0)
 tools = [query_contract_segments, web_legal_search]
 
 SYSTEM_ORCHESTRATOR_PROMPT = """
@@ -24,6 +24,18 @@ agent_executor = create_react_agent(
     tools=tools,
     prompt=SYSTEM_ORCHESTRATOR_PROMPT
 )
+
+def run_agent(
+    query: str, 
+    chat_history: Optional[List[Dict[str, str]]] = None
+) -> Dict:
+    """
+    Synchronous wrapper around agent_executor for direct testing and non-streaming invocations.
+    """
+    if chat_history is None:
+        chat_history = []
+    messages = chat_history + [{"role": "user", "content": query}]
+    return agent_executor.invoke({"messages": messages})
 
 async def run_agent_stream(
     query: str, 
