@@ -1,72 +1,84 @@
-<div id="chat-console" class="bg-[#121418] border border-[#1c1f26] rounded-md flex flex-col h-[600px] shadow-2xl overflow-hidden">
-  <div id="pillars-container" class="bg-[#0b0c0e] border-b border-[#1c1f26] px-4 py-3 hidden">
-    <span class="text-[9px] uppercase font-bold font-mono tracking-widest text-slate-500 block mb-2">TARGET SUBSURFACE SECTOR INTAKES:</span>
-    <div id="pills-wrapper" class="flex flex-wrap gap-1.5"></div>
-  </div>
-
-  <div id="chat-arena" class="flex-1 p-5 overflow-y-auto space-y-5 bg-gradient-to-b from-[#0b0c0e]/20 to-transparent text-sm custom-scrollbar">
-    <div class="max-w-xl border border-[#1c1f26] bg-[#0b0c0e]/60 rounded-md p-4 text-slate-400 font-mono space-y-2 text-xs">
-      <p class="text-slate-200 font-bold">SYSTEM CORE INITIALIZED // INSTANCE RUNNING</p>
-      <p class="text-slate-500">Provide a structured contract to isolate RAG segments, or run global lookups directly below.</p>
-      <div class="pt-2 border-t border-[#1c1f26]/60 text-[10px] text-slate-600 space-y-1">
-        <p>• NET_POOL: Serverless gateways employ lazy-loading connection architectures to protect memory boundaries.</p>
-        <p>• TELEMETRY: The initial system interaction establishes remote TLS handshakes for Supabase and Groq networks, requiring a brief warm-up sequence.</p>
+---
+---
+<div id="chat-console" class="bg-white border border-slate-200 rounded-2xl flex flex-col h-[650px] shadow-sm overflow-hidden">
+  <!-- Agent Routing Matrix Header Bar -->
+  <div class="bg-slate-50/80 border-b border-slate-200 px-5 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+      <h3 class="text-xs font-bold text-slate-700 tracking-wider uppercase font-mono">Agentic Legal Auditor</h3>
+    </div>
+    
+    <!-- Active Traces -->
+    <div class="flex items-center gap-2 text-xs">
+      <div id="trace-supervisor" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 font-medium shadow-2xs">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span>Orchestrator</span>
+      </div>
+      <span class="text-slate-300">→</span>
+      <div id="trace-vector" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-400 transition-all">
+        <span class="w-1.5 h-1.5 rounded-full bg-slate-300" id="dot-vector"></span>
+        <span>RAG Tool</span>
+      </div>
+      <span class="text-slate-300">→</span>
+      <div id="trace-wan" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-400 transition-all">
+        <span class="w-1.5 h-1.5 rounded-full bg-slate-300" id="dot-wan"></span>
+        <span>Web Search</span>
       </div>
     </div>
   </div>
 
-  <form id="chat-form" class="border-t border-[#1c1f26] p-4 bg-[#0b0c0e]/50 flex items-center gap-3 shrink-0">
-    <input type="text" id="user-input" placeholder="Query contract parameters or assert regulatory thresholds..." autocomplete="off" class="flex-1 bg-[#0b0c0e] border border-[#1c1f26] rounded px-4 py-3.5 text-base text-slate-200 font-mono placeholder-slate-600 focus:outline-none focus:border-[#424b5d] transition-all" />
-    <button type="submit" class="bg-[#84a98c] hover:bg-[#9dc1a3] text-slate-950 text-xs font-bold font-mono px-6 py-3.5 rounded transition-all uppercase tracking-widest shadow-md cursor-pointer">
-      EXECUTE
+  <!-- Chat Arena -->
+  <div id="chat-arena" class="flex-1 p-5 overflow-y-auto space-y-4 bg-slate-50/30 text-sm custom-scrollbar">
+    <!-- Welcome message card -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3 max-w-2xl">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+          AI
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900">Legal Audit Assistant Ready</h4>
+          <p class="text-xs text-slate-500">Autonomous contract inspection & compliance verification</p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Upload a legal PDF contract on the left to extract document chunks and section boundaries, or ask general corporate compliance questions directly below.
+      </p>
+      <div class="pt-2 border-t border-slate-100 flex flex-wrap gap-2 text-xs text-slate-500">
+        <span class="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-600">• Single-document isolation</span>
+        <span class="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-600">• Groq Qwen-3.6 27B</span>
+        <span class="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-600">• Dynamic RAG indexing</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Input Area -->
+  <form id="chat-form" class="border-t border-slate-200 p-4 bg-white flex items-center gap-3 shrink-0">
+    <input 
+      type="text" 
+      id="user-input" 
+      placeholder="Ask about payment terms, liabilities, termination clauses..." 
+      autocomplete="off" 
+      class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
+    />
+    <button 
+      type="submit" 
+      class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-3.5 rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-2 text-sm shrink-0"
+    >
+      <span>Send</span>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      </svg>
     </button>
   </form>
 </div>
-
-<style>
-  /* Optional polish: Ensure scroll tracks match your clean dark interface values */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #0b0c0e;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #1c1f26;
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #232730;
-  }
-</style>
 
 <script>
   let chatHistory: Array<{role: string, content: string}> = [];
   
   const chatForm = document.getElementById('chat-form');
   const userInput = document.getElementById('user-input') as HTMLInputElement;
-  const pillarsContainer = document.getElementById('pillars-container');
-  const pillsWrapper = document.getElementById('pills-wrapper');
 
   const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'https://agentic-auditor.onrender.com';
-
-  window.addEventListener('document-processed', (e: any) => {
-    if (!pillarsContainer || !pillsWrapper || !userInput) return;
-    
-    pillarsContainer.classList.remove('hidden');
-    pillsWrapper.innerHTML = '';
-    
-    e.detail.sections.forEach((section: string) => {
-      const pill = document.createElement('button');
-      pill.className = "px-2.5 py-1 text-[10px] font-mono rounded bg-[#121418] border border-[#1c1f26] text-slate-400 hover:text-slate-200 hover:border-slate-500 transition-colors cursor-pointer";
-      pill.innerText = section.toUpperCase();
-      pill.onclick = () => {
-        userInput.value = `Audit core structures for segment: [${section}] // Target: `;
-        userInput.focus();
-      };
-      pillsWrapper.appendChild(pill);
-    });
-  });
 
   chatForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -98,12 +110,12 @@
         const bodyTextEl = messageElement.querySelector('.body-text') as HTMLElement;
         const badgeContainer = messageElement.querySelector('.badge-container') as HTMLElement;
 
-        messageElement.classList.remove('border-[#1c1f26]/60');
-        messageElement.classList.add('border-amber-500/20', 'bg-amber-950/10');
-        badgeContainer.innerHTML = `<span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-400/40">HTTP 429 // ACCESS_DENIED</span>`;
-        bodyTextEl.innerText = errorData.message;
-        bodyTextEl.classList.remove('text-slate-400', 'animate-pulse');
-        bodyTextEl.classList.add('text-amber-200/80');
+        messageElement.classList.remove('bg-white', 'border-slate-200');
+        messageElement.classList.add('bg-amber-50', 'border-amber-200');
+        badgeContainer.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300">HTTP 429 // RATE LIMIT</span>`;
+        bodyTextEl.innerText = errorData.message || 'Rate limit exceeded. Please wait a moment before sending another message.';
+        bodyTextEl.classList.remove('animate-pulse', 'text-slate-400');
+        bodyTextEl.classList.add('text-amber-900');
         return; 
       }
 
@@ -131,20 +143,20 @@
             const parsed = JSON.parse(line.replace('data: ', ''));
             if (parsed.type === 'metadata') {
               if (parsed.badge.includes('WAN')) {
-                traceWan?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418] border border-amber-500/30 text-amber-400 transition-all');
-                dotWan?.setAttribute('class', 'h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_6px_#amber-400]');
+                traceWan?.setAttribute('class', 'flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-800 font-medium transition-all');
+                if (dotWan) dotWan.setAttribute('class', 'w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]');
               } else {
-                traceVector?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418] border border-[#84a98c]/30 text-[#84a98c] transition-all');
-                dotVector?.setAttribute('class', 'h-2 w-2 rounded-full bg-[#84a98c] shadow-[0_0_6px_#84a98c]');
+                traceVector?.setAttribute('class', 'flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 font-medium transition-all');
+                if (dotVector) dotVector.setAttribute('class', 'w-1.5 h-1.5 rounded-full bg-indigo-600 shadow-[0_0_6px_rgba(79,70,229,0.5)]');
               }
-              badgeContainer.innerHTML = `<span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-zinc-800 text-zinc-400 border border-zinc-700/40">${parsed.badge}</span>`;
+              badgeContainer.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">${parsed.badge}</span>`;
             } 
             
             if (parsed.type === 'content') {
               if (isFirstChunk) {
                 bodyTextEl.innerText = '';
                 bodyTextEl.classList.remove('animate-pulse', 'text-slate-400');
-                bodyTextEl.classList.add('text-slate-200');
+                bodyTextEl.classList.add('text-slate-800');
                 isFirstChunk = false;
               }
               bodyTextEl.innerText += parsed.token;
@@ -165,11 +177,11 @@
         reader.releaseLock();
       }
       setTimeout(() => {
-        traceVector?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all');
-        dotVector?.setAttribute('class', 'h-2 w-2 rounded-full bg-slate-800');
-        traceWan?.setAttribute('class', 'flex items-center gap-2 px-3 py-1.5 rounded bg-[#121418]/40 border border-[#1c1f26]/40 text-slate-500 transition-all');
-        dotWan?.setAttribute('class', 'h-2 w-2 rounded-full bg-slate-800');
-      }, 1000);
+        traceVector?.setAttribute('class', 'flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-400 transition-all');
+        if (dotVector) dotVector.setAttribute('class', 'w-1.5 h-1.5 rounded-full bg-slate-300');
+        traceWan?.setAttribute('class', 'flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-400 transition-all');
+        if (dotWan) dotWan.setAttribute('class', 'w-1.5 h-1.5 rounded-full bg-slate-300');
+      }, 1200);
     }
   });
 
@@ -178,12 +190,12 @@
     if (!chatArena) return;
 
     const div = document.createElement('div');
-    div.className = 'border rounded-md p-5 bg-[#181b22]/40 border-[#1c1f26] text-slate-200 max-w-full overflow-hidden min-w-0';
+    div.className = 'bg-slate-900 text-white rounded-2xl p-4 shadow-sm text-sm max-w-[85%] ml-auto space-y-1';
     div.innerHTML = `
-      <div class="flex items-center gap-2 mb-2 font-mono text-[10px]">
-        <span class="text-slate-500 font-semibold">› USER.CMD</span>
+      <div class="flex items-center justify-end gap-1.5 text-[10px] text-slate-400 font-semibold tracking-wider uppercase">
+        <span>YOU</span>
       </div>
-      <p class="text-sm leading-relaxed tracking-normal font-sans mt-2 text-slate-200 break-words whitespace-pre-wrap min-w-0">${text}</p>
+      <p class="text-sm leading-relaxed text-slate-100 break-words whitespace-pre-wrap">${text}</p>
     `;
     chatArena.appendChild(div);
     chatArena.scrollTop = chatArena.scrollHeight;
@@ -194,15 +206,16 @@
     if (!chatArena) return document.createElement('div');
 
     const div = document.createElement('div');
-    div.className = 'border rounded-md p-5 bg-[#0b0c0e]/60 border-[#1c1f26]/60 text-slate-300 max-w-full overflow-hidden min-w-0';
+    div.className = 'bg-white border border-slate-200 text-slate-800 rounded-2xl p-4 shadow-sm text-sm max-w-[90%] mr-auto space-y-2';
     div.innerHTML = `
-      <div class="flex items-center justify-between mb-2 font-mono text-[10px]">
+      <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <span class="text-[#84a98c] font-bold">› ENGINE.SYS</span>
+          <div class="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px]">AI</div>
+          <span class="text-xs font-semibold text-slate-700">Legal Auditor</span>
         </div>
         <div class="badge-container"></div>
       </div>
-      <p class="body-text text-sm leading-relaxed tracking-normal font-sans mt-2 text-slate-400 animate-pulse break-words whitespace-pre-wrap min-w-0"></p>
+      <p class="body-text text-sm leading-relaxed text-slate-400 animate-pulse break-words whitespace-pre-wrap">Thinking...</p>
     `;
     chatArena.appendChild(div);
     chatArena.scrollTop = chatArena.scrollHeight;
